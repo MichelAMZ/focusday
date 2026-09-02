@@ -7,6 +7,8 @@ import '../application/today_controller.dart';
 import '../application/focus_timer_controller.dart';
 import '../application/focus_timer_state.dart';
 
+import '../../../core/window/window_mode_controller.dart';
+
 class TodayPage extends ConsumerWidget {
   const TodayPage({super.key});
 
@@ -20,6 +22,13 @@ class TodayPage extends ConsumerWidget {
     );
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          ref.read(focusWindowModeProvider.notifier).enterMiniMode();
+        },
+        icon: const Icon(Icons.view_stream_outlined),
+        label: const Text('Mini-bar'),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
