@@ -99,31 +99,70 @@ class _ProjectsPanel extends StatelessWidget {
         const SizedBox(height: 16),
 
         Expanded(
-          child: ListView.separated(
+          child: ReorderableListView.builder(
+            buildDefaultDragHandles: false,
             itemCount: projects.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            onReorderItem: (oldIndex, newIndex) {
+              final project = projects[oldIndex];
+
+              if (project.status != FocusProjectStatus.waiting) {
+                return;
+              }
+
+              final waitingProjects = projects
+                  .where((item) => item.status == FocusProjectStatus.waiting)
+                  .toList();
+
+              final waitingStartIndex = projects.indexWhere(
+                (item) => item.status == FocusProjectStatus.waiting,
+              );
+
+              if (waitingStartIndex == -1) {
+                return;
+              }
+
+              var targetWaitingIndex = newIndex - waitingStartIndex;
+
+              targetWaitingIndex = targetWaitingIndex.clamp(
+                0,
+                waitingProjects.length - 1,
+              );
+
+              ProviderScope.containerOf(context)
+                  .read(todayProjectsProvider.notifier)
+                  .reorderWaitingProject(
+                    projectId: project.id,
+                    newWaitingIndex: targetWaitingIndex,
+                  );
+            },
             itemBuilder: (context, index) {
               final project = projects[index];
 
-              return _ProjectCard(
-                project: project,
-                onEdit: () => _showEditProjectDialog(context, project),
-                onDelete: () => _confirmDeleteProject(context, project),
+              return Padding(
+                key: ValueKey(project.id),
+                padding: EdgeInsets.only(
+                  bottom: index == projects.length - 1 ? 0 : 12,
+                ),
+                child: _ProjectCard(
+                  project: project,
+                  reorderIndex: index,
+                  onEdit: () => _showEditProjectDialog(context, project),
+                  onDelete: () => _confirmDeleteProject(context, project),
+                  onReactivate: () {
+                    final container = ProviderScope.containerOf(context);
 
-                onReactivate: () {
-                  final container = ProviderScope.containerOf(context);
+                    container
+                        .read(todayProjectsProvider.notifier)
+                        .reactivateProject(project.id);
 
-                  container
-                      .read(todayProjectsProvider.notifier)
-                      .reactivateProject(project.id);
-
-                  container
-                      .read(focusTimerProvider.notifier)
-                      .reset(
-                        projectId: project.id,
-                        durationMinutes: project.durationMinutes,
-                      );
-                },
+                    container
+                        .read(focusTimerProvider.notifier)
+                        .reset(
+                          projectId: project.id,
+                          durationMinutes: project.durationMinutes,
+                        );
+                  },
+                ),
               );
             },
           ),
@@ -383,12 +422,14 @@ class _ProjectCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onReactivate,
+    required this.reorderIndex,
   });
 
   final FocusProject project;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onReactivate;
+  final int reorderIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -421,6 +462,20 @@ class _ProjectCard extends StatelessWidget {
               ),
               Text('${project.durationMinutes} min'),
               const SizedBox(width: 8),
+
+              if (project.status == FocusProjectStatus.waiting) ...[
+                const SizedBox(width: 8),
+                ReorderableDragStartListener(
+                  index: reorderIndex,
+                  child: const Tooltip(
+                    message: 'Modifier la priorité',
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.drag_indicator),
+                    ),
+                  ),
+                ),
+              ],
               PopupMenuButton<String>(
                 tooltip: 'Actions',
                 onSelected: (value) {

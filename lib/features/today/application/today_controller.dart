@@ -289,6 +289,47 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void reorderWaitingProject({
+    required String projectId,
+    required int newWaitingIndex,
+  }) {
+    final waitingProjects = state
+        .where((project) => project.status == FocusProjectStatus.waiting)
+        .toList();
+
+    final oldWaitingIndex = waitingProjects.indexWhere(
+      (project) => project.id == projectId,
+    );
+
+    if (oldWaitingIndex == -1) {
+      return;
+    }
+
+    final boundedIndex = newWaitingIndex.clamp(0, waitingProjects.length - 1);
+
+    if (oldWaitingIndex == boundedIndex) {
+      return;
+    }
+
+    final movedProject = waitingProjects.removeAt(oldWaitingIndex);
+
+    waitingProjects.insert(boundedIndex, movedProject);
+
+    var waitingIndex = 0;
+
+    final updatedProjects = [
+      for (final project in state)
+        if (project.status == FocusProjectStatus.waiting)
+          waitingProjects[waitingIndex++]
+        else
+          project,
+    ];
+
+    state = _sortProjectsByPriority(updatedProjects);
+
+    _persist();
+  }
+
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
     final active = projects.where(
       (project) => project.status == FocusProjectStatus.active,

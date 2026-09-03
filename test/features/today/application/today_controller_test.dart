@@ -211,4 +211,31 @@ void main() {
       1,
     );
   });
+
+  test('réordonne les projets en attente sans déplacer le projet actif', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.reorderWaitingProject(projectId: 'akoffa', newWaitingIndex: 0);
+
+    final projects = container.read(todayProjectsProvider);
+
+    expect(projects[0].id, 'bogoka');
+    expect(projects[0].status, FocusProjectStatus.active);
+
+    expect(projects[1].id, 'akoffa');
+    expect(projects[1].status, FocusProjectStatus.waiting);
+
+    expect(projects[2].id, 'dotnet');
+    expect(projects[3].id, 'ovoodoc');
+
+    expect(
+      projects
+          .where((project) => project.status == FocusProjectStatus.active)
+          .length,
+      1,
+    );
+  });
 }
