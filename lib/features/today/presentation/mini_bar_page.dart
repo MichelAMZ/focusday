@@ -20,6 +20,10 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
   Timer? _clockTicker;
   DateTime _now = DateTime.now();
 
+  Timer? _blinkTicker;
+  bool _borderVisible = true;
+  int? _lastBlinkSpeedMs;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +42,7 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
   @override
   void dispose() {
     _clockTicker?.cancel();
+    _blinkTicker?.cancel();
     super.dispose();
   }
 
@@ -61,88 +66,164 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
         ? timer.remainingSeconds
         : activeProject.durationMinutes * 60;
 
+    final timerColor = _timerColor(context, remainingSeconds);
+
+    _updateBlinking(timer.status, remainingSeconds);
+
     return Scaffold(
-      body: Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(
-              children: [
-                Icon(
-                  timer.status == FocusTimerStatus.running
-                      ? Icons.radio_button_checked
-                      : Icons.circle_outlined,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    activeProject.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(
+            color: _borderVisible ? timerColor : Colors.transparent,
+            width: remainingSeconds <= 60 ? 3 : 2,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    timer.status == FocusTimerStatus.running
+                        ? Icons.radio_button_checked
+                        : Icons.circle_outlined,
+                    size: 16,
+                    color: timerColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      activeProject.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Text(
+                    _formatSeconds(remainingSeconds),
+                    style: TextStyle(
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
+                      color: timerColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                ),
-                const SizedBox(width: 18),
-                Text(
-                  _formatSeconds(remainingSeconds),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w400,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                  const Spacer(),
+                  _TimerActionButton(timer: timer),
+                  IconButton(
+                    tooltip: 'Restaurer FocusDay',
+                    onPressed: () {
+                      ref
+                          .read(focusWindowModeProvider.notifier)
+                          .restoreNormalMode();
+                    },
+                    icon: const Icon(Icons.open_in_full),
                   ),
-                ),
-                const Spacer(),
-                _TimerActionButton(timer: timer),
-                IconButton(
-                  tooltip: 'Restaurer FocusDay',
-                  onPressed: () {
-                    ref
-                        .read(focusWindowModeProvider.notifier)
-                        .restoreNormalMode();
-                  },
-                  icon: const Icon(Icons.open_in_full),
-                ),
-                IconButton(
-                  tooltip: 'Fermer FocusDay',
-                  onPressed: () {
-                    ref.read(focusWindowModeProvider.notifier).closeApp();
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                  IconButton(
+                    tooltip: 'Fermer FocusDay',
+                    onPressed: () {
+                      ref.read(focusWindowModeProvider.notifier).closeApp();
+                    },
+                    icon: const Icon(Icons.close),
                   ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    _formatDateTime(_now),
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      fontFeatures: [FontFeature.tabularFigures()],
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _formatDateTime(_now),
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  void _updateBlinking(FocusTimerStatus status, int remainingSeconds) {
+    final shouldBlink =
+        status == FocusTimerStatus.running && remainingSeconds <= 300;
+
+    if (!shouldBlink) {
+      if (_blinkTicker != null) {
+        _blinkTicker?.cancel();
+        _blinkTicker = null;
+      }
+
+      _lastBlinkSpeedMs = null;
+
+      if (!_borderVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _borderVisible = true;
+            });
+          }
+        });
+      }
+
+      return;
+    }
+
+    final blinkSpeedMs = remainingSeconds <= 60 ? 250 : 500;
+
+    if (_blinkTicker != null && _lastBlinkSpeedMs == blinkSpeedMs) {
+      return;
+    }
+
+    _blinkTicker?.cancel();
+    _lastBlinkSpeedMs = blinkSpeedMs;
+
+    _blinkTicker = Timer.periodic(Duration(milliseconds: blinkSpeedMs), (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _borderVisible = !_borderVisible;
+      });
+    });
+  }
+
+  static Color _timerColor(BuildContext context, int remainingSeconds) {
+    if (remainingSeconds <= 60) {
+      return Colors.red.shade700;
+    }
+
+    if (remainingSeconds <= 300) {
+      return Colors.orange.shade800;
+    }
+
+    if (remainingSeconds <= 600) {
+      return Colors.green.shade700;
+    }
+
+    return Theme.of(context).colorScheme.primary;
   }
 
   static String _formatSeconds(int seconds) {

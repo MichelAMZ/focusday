@@ -99,6 +99,14 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
           FocusTask(id: '$projectId-task-$i', title: taskTitles[i].trim()),
     ];
 
+    final hasActiveProject = state.any(
+      (project) => project.status == FocusProjectStatus.active,
+    );
+
+    final newProjectStatus = hasActiveProject
+        ? FocusProjectStatus.waiting
+        : FocusProjectStatus.active;
+
     state = [
       ...state,
       FocusProject(
@@ -106,6 +114,7 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
         name: trimmedName,
         durationMinutes: durationMinutes,
         tasks: tasks,
+        status: newProjectStatus,
       ),
     ];
 
@@ -241,7 +250,7 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
 
     int? nextIndex;
 
-    for (var i = currentIndex + 1; i < updatedProjects.length; i++) {
+    for (var i = 0; i < updatedProjects.length; i++) {
       if (updatedProjects[i].status == FocusProjectStatus.waiting) {
         nextIndex = i;
         break;
@@ -254,8 +263,27 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
       );
     }
 
-    state = updatedProjects;
-
+    state = _sortProjectsByPriority(updatedProjects);
     _persist();
+  }
+
+  List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
+    final active = projects.where(
+      (project) => project.status == FocusProjectStatus.active,
+    );
+
+    final paused = projects.where(
+      (project) => project.status == FocusProjectStatus.paused,
+    );
+
+    final waiting = projects.where(
+      (project) => project.status == FocusProjectStatus.waiting,
+    );
+
+    final completed = projects.where(
+      (project) => project.status == FocusProjectStatus.completed,
+    );
+
+    return [...active, ...paused, ...waiting, ...completed];
   }
 }

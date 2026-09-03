@@ -202,13 +202,43 @@ class _ProjectsPanel extends StatelessWidget {
       return;
     }
 
-    ProviderScope.containerOf(context)
+    final container = ProviderScope.containerOf(context);
+
+    final projectsBeforeAdd = container.read(todayProjectsProvider);
+
+    final hadActiveProject = projectsBeforeAdd.any(
+      (project) => project.status == FocusProjectStatus.active,
+    );
+
+    container
         .read(todayProjectsProvider.notifier)
         .addProject(
           name: result['name'] as String,
           durationMinutes: result['duration'] as int,
-          taskTitles: (result['tasks'] as List<String>),
+          taskTitles: result['tasks'] as List<String>,
         );
+
+    if (!hadActiveProject) {
+      final projectsAfterAdd = container.read(todayProjectsProvider);
+
+      FocusProject? activeProject;
+
+      for (final project in projectsAfterAdd) {
+        if (project.status == FocusProjectStatus.active) {
+          activeProject = project;
+          break;
+        }
+      }
+
+      if (activeProject != null) {
+        container
+            .read(focusTimerProvider.notifier)
+            .reset(
+              projectId: activeProject.id,
+              durationMinutes: activeProject.durationMinutes,
+            );
+      }
+    }
   }
 
   Future<void> _showEditProjectDialog(

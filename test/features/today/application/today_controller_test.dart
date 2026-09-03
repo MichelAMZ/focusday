@@ -131,4 +131,57 @@ void main() {
 
     expect(project.tasks, isEmpty);
   });
+
+  test('active le nouveau projet quand tous les autres sont terminés', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.completeProjectAndActivateNext('bogoka');
+    controller.completeProjectAndActivateNext('dotnet');
+    controller.completeProjectAndActivateNext('ovoodoc');
+    controller.completeProjectAndActivateNext('akoffa');
+
+    final beforeAdd = container.read(todayProjectsProvider);
+
+    expect(
+      beforeAdd.any((project) => project.status == FocusProjectStatus.active),
+      isFalse,
+    );
+
+    controller.addProject(name: 'Nouveau projet actif', durationMinutes: 25);
+
+    final projects = container.read(todayProjectsProvider);
+    final added = projects.last;
+
+    expect(added.name, 'Nouveau projet actif');
+    expect(added.status, FocusProjectStatus.active);
+
+    expect(
+      projects
+          .where((project) => project.status == FocusProjectStatus.active)
+          .length,
+      1,
+    );
+  });
+
+  test('fait remonter le prochain projet actif en première position', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.completeProjectAndActivateNext('bogoka');
+
+    final projects = container.read(todayProjectsProvider);
+
+    expect(projects.first.id, 'dotnet');
+    expect(projects.first.status, FocusProjectStatus.active);
+
+    expect(
+      projects.lastWhere((project) => project.id == 'bogoka').status,
+      FocusProjectStatus.completed,
+    );
+  });
 }
