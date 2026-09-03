@@ -238,4 +238,27 @@ void main() {
       1,
     );
   });
+
+  test('met à jour le titre et la description d’une tâche', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.updateTask(
+      projectId: 'bogoka',
+      taskId: 'bogoka-1',
+      title: 'Nouvelle tâche',
+      description: 'Détails de la tâche',
+    );
+
+    final project = container
+        .read(todayProjectsProvider)
+        .firstWhere((project) => project.id == 'bogoka');
+
+    final task = project.tasks.firstWhere((task) => task.id == 'bogoka-1');
+
+    expect(task.title, 'Nouvelle tâche');
+    expect(task.description, 'Détails de la tâche');
+  });
 }

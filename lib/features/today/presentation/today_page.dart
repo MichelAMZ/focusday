@@ -8,6 +8,7 @@ import '../application/focus_timer_controller.dart';
 import '../application/focus_timer_state.dart';
 
 import '../../../core/window/window_mode_controller.dart';
+import '../../projects/domain/focus_task.dart';
 
 class TodayPage extends ConsumerWidget {
   const TodayPage({super.key});
@@ -616,6 +617,36 @@ class _ActiveProjectPanel extends ConsumerWidget {
               )
             else
               for (final task in project.tasks)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Checkbox(
+                    value: task.isCompleted,
+                    onChanged: (_) {
+                      ref
+                          .read(todayProjectsProvider.notifier)
+                          .toggleTask(project.id, task.id);
+                    },
+                  ),
+                  title: Text(
+                    task.title,
+                    style: TextStyle(
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  subtitle: task.description.isEmpty
+                      ? null
+                      : Text(
+                          task.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showEditTaskDialog(context, ref, project, task),
+                ),
+
+            /*
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
@@ -634,6 +665,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
                         .toggleTask(project.id, task.id);
                   },
                 ),
+          */
           ],
         ),
       ),
@@ -699,6 +731,86 @@ class _ActiveProjectPanel extends ConsumerWidget {
     ref
         .read(todayProjectsProvider.notifier)
         .addTask(projectId: project.id, title: title);
+  }
+
+  static Future<void> _showEditTaskDialog(
+    BuildContext context,
+    WidgetRef ref,
+    FocusProject project,
+    FocusTask task,
+  ) async {
+    final titleController = TextEditingController(text: task.title);
+    final descriptionController = TextEditingController(text: task.description);
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Détails de la tâche'),
+          content: SizedBox(
+            width: 460,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(labelText: 'Titre'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    hintText: 'Ajouter les détails de cette tâche...',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final title = titleController.text.trim();
+
+                if (title.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop({
+                  'title': title,
+                  'description': descriptionController.text.trim(),
+                });
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    titleController.dispose();
+    descriptionController.dispose();
+
+    if (result == null || !context.mounted) {
+      return;
+    }
+
+    ref
+        .read(todayProjectsProvider.notifier)
+        .updateTask(
+          projectId: project.id,
+          taskId: task.id,
+          title: result['title']!,
+          description: result['description'] ?? '',
+        );
   }
 
   static List<Widget> _buildTimerButtons({

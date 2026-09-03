@@ -195,8 +195,10 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     required String projectId,
     required String taskId,
     required String title,
+    String description = '',
   }) {
     final trimmedTitle = title.trim();
+    final trimmedDescription = description.trim();
 
     if (trimmedTitle.isEmpty) {
       return;
@@ -209,7 +211,10 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
             tasks: [
               for (final task in project.tasks)
                 if (task.id == taskId)
-                  task.copyWith(title: trimmedTitle)
+                  task.copyWith(
+                    title: trimmedTitle,
+                    description: trimmedDescription,
+                  )
                 else
                   task,
             ],
