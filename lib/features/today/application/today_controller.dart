@@ -267,6 +267,28 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void reactivateProject(String projectId) {
+    final targetExists = state.any((project) => project.id == projectId);
+
+    if (!targetExists) {
+      return;
+    }
+
+    final updatedProjects = [
+      for (final project in state)
+        if (project.id == projectId)
+          project.copyWith(status: FocusProjectStatus.active)
+        else if (project.status == FocusProjectStatus.active)
+          project.copyWith(status: FocusProjectStatus.waiting)
+        else
+          project,
+    ];
+
+    state = _sortProjectsByPriority(updatedProjects);
+
+    _persist();
+  }
+
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
     final active = projects.where(
       (project) => project.status == FocusProjectStatus.active,

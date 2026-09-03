@@ -184,4 +184,31 @@ void main() {
       FocusProjectStatus.completed,
     );
   });
+
+  test('réactive un projet terminé et le remet en première position', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.completeProjectAndActivateNext('bogoka');
+
+    controller.reactivateProject('bogoka');
+
+    final projects = container.read(todayProjectsProvider);
+
+    expect(projects.first.id, 'bogoka');
+    expect(projects.first.status, FocusProjectStatus.active);
+
+    final dotnet = projects.firstWhere((project) => project.id == 'dotnet');
+
+    expect(dotnet.status, FocusProjectStatus.waiting);
+
+    expect(
+      projects
+          .where((project) => project.status == FocusProjectStatus.active)
+          .length,
+      1,
+    );
+  });
 }

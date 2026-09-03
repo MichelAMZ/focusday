@@ -109,6 +109,21 @@ class _ProjectsPanel extends StatelessWidget {
                 project: project,
                 onEdit: () => _showEditProjectDialog(context, project),
                 onDelete: () => _confirmDeleteProject(context, project),
+
+                onReactivate: () {
+                  final container = ProviderScope.containerOf(context);
+
+                  container
+                      .read(todayProjectsProvider.notifier)
+                      .reactivateProject(project.id);
+
+                  container
+                      .read(focusTimerProvider.notifier)
+                      .reset(
+                        projectId: project.id,
+                        durationMinutes: project.durationMinutes,
+                      );
+                },
               );
             },
           ),
@@ -367,11 +382,13 @@ class _ProjectCard extends StatelessWidget {
     required this.project,
     required this.onEdit,
     required this.onDelete,
+    required this.onReactivate,
   });
 
   final FocusProject project;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onReactivate;
 
   @override
   Widget build(BuildContext context) {
@@ -409,12 +426,19 @@ class _ProjectCard extends StatelessWidget {
                 onSelected: (value) {
                   if (value == 'edit') {
                     onEdit();
+                  } else if (value == 'reactivate') {
+                    onReactivate();
                   } else if (value == 'delete') {
                     onDelete();
                   }
                 },
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                  if (project.status == FocusProjectStatus.completed)
+                    const PopupMenuItem(
+                      value: 'reactivate',
+                      child: Text('Réactiver'),
+                    ),
                   PopupMenuItem(
                     value: 'delete',
                     enabled: !active,
