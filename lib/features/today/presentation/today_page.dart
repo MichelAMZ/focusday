@@ -136,6 +136,7 @@ class _ProjectsPanel extends StatelessWidget {
                     newWaitingIndex: targetWaitingIndex,
                   );
             },
+
             itemBuilder: (context, index) {
               final project = projects[index];
 
@@ -163,6 +164,8 @@ class _ProjectsPanel extends StatelessWidget {
                           durationMinutes: project.durationMinutes,
                         );
                   },
+                  onSchedule: () =>
+                      _showScheduleProjectDialog(context, project),
                 ),
               );
             },
@@ -415,6 +418,48 @@ class _ProjectsPanel extends StatelessWidget {
       context,
     ).read(todayProjectsProvider.notifier).deleteProject(project.id);
   }
+
+  Future<void> _showScheduleProjectDialog(
+    BuildContext context,
+    FocusProject project,
+  ) async {
+    final now = DateTime.now();
+
+    final initialDate = project.scheduledAt ?? now;
+    final initialTime = TimeOfDay.fromDateTime(project.scheduledAt ?? now);
+
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 5),
+    );
+
+    if (selectedDate == null || !context.mounted) {
+      return;
+    }
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+
+    if (selectedTime == null || !context.mounted) {
+      return;
+    }
+
+    final scheduledAt = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    ProviderScope.containerOf(context)
+        .read(todayProjectsProvider.notifier)
+        .scheduleProject(projectId: project.id, scheduledAt: scheduledAt);
+  }
 }
 
 class _ProjectCard extends StatelessWidget {
@@ -424,6 +469,7 @@ class _ProjectCard extends StatelessWidget {
     required this.onDelete,
     required this.onReactivate,
     required this.reorderIndex,
+    required this.onSchedule,
   });
 
   final FocusProject project;
@@ -431,6 +477,7 @@ class _ProjectCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onReactivate;
   final int reorderIndex;
+  final VoidCallback onSchedule;
 
   @override
   Widget build(BuildContext context) {
@@ -461,7 +508,20 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text('${project.durationMinutes} min'),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${project.durationMinutes} min'),
+                  if (project.scheduledAt != null)
+                    Text(
+                      _formatScheduledAt(project.scheduledAt!),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(width: 8),
 
               if (project.status == FocusProjectStatus.waiting) ...[
@@ -486,6 +546,12 @@ class _ProjectCard extends StatelessWidget {
                     onReactivate();
                   } else if (value == 'delete') {
                     onDelete();
+                  } else if (value == 'schedule') {
+                    onSchedule();
+                  } else if (value == 'clearSchedule') {
+                    ProviderScope.containerOf(context)
+                        .read(todayProjectsProvider.notifier)
+                        .clearProjectSchedule(project.id);
                   }
                 },
                 itemBuilder: (context) => [
@@ -495,6 +561,21 @@ class _ProjectCard extends StatelessWidget {
                       value: 'reactivate',
                       child: Text('Réactiver'),
                     ),
+                  PopupMenuItem(
+                    value: 'schedule',
+                    child: Text(
+                      project.scheduledAt == null
+                          ? 'Programmer'
+                          : 'Modifier la programmation',
+                    ),
+                  ),
+
+                  if (project.scheduledAt != null)
+                    const PopupMenuItem(
+                      value: 'clearSchedule',
+                      child: Text('Supprimer la programmation'),
+                    ),
+
                   PopupMenuItem(
                     value: 'delete',
                     enabled: !active,
@@ -509,6 +590,15 @@ class _ProjectCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _formatScheduledAt(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+
+    return '$day/$month · $hour:$minute';
   }
 }
 

@@ -261,4 +261,40 @@ void main() {
     expect(task.title, 'Nouvelle tâche');
     expect(task.description, 'Détails de la tâche');
   });
+
+  test('programme un projet à une date et une heure données', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    final scheduledAt = DateTime(2026, 9, 5, 14, 30);
+
+    controller.scheduleProject(projectId: 'bogoka', scheduledAt: scheduledAt);
+
+    final project = container
+        .read(todayProjectsProvider)
+        .firstWhere((project) => project.id == 'bogoka');
+
+    expect(project.scheduledAt, scheduledAt);
+  });
+
+  test('supprime la programmation d’un projet', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    final scheduledAt = DateTime(2026, 9, 5, 14, 30);
+
+    controller.scheduleProject(projectId: 'bogoka', scheduledAt: scheduledAt);
+
+    controller.clearProjectSchedule('bogoka');
+
+    final project = container
+        .read(todayProjectsProvider)
+        .firstWhere((project) => project.id == 'bogoka');
+
+    expect(project.scheduledAt, isNull);
+  });
 }

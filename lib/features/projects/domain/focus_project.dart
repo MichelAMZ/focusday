@@ -9,6 +9,7 @@ class FocusProject {
     required this.durationMinutes,
     required this.tasks,
     this.status = FocusProjectStatus.waiting,
+    this.scheduledAt,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class FocusProject {
   final int durationMinutes;
   final List<FocusTask> tasks;
   final FocusProjectStatus status;
+  final DateTime? scheduledAt;
 
   FocusProject copyWith({
     String? id,
@@ -23,6 +25,8 @@ class FocusProject {
     int? durationMinutes,
     List<FocusTask>? tasks,
     FocusProjectStatus? status,
+    DateTime? scheduledAt,
+    bool clearScheduledAt = false,
   }) {
     return FocusProject(
       id: id ?? this.id,
@@ -30,6 +34,7 @@ class FocusProject {
       durationMinutes: durationMinutes ?? this.durationMinutes,
       tasks: tasks ?? this.tasks,
       status: status ?? this.status,
+      scheduledAt: clearScheduledAt ? null : scheduledAt ?? this.scheduledAt,
     );
   }
 
@@ -39,6 +44,7 @@ class FocusProject {
       'name': name,
       'durationMinutes': durationMinutes,
       'status': status.name,
+      'scheduledAt': scheduledAt?.toIso8601String(),
       'tasks': tasks.map((task) => task.toJson()).toList(),
     };
   }
@@ -54,11 +60,16 @@ class FocusProject {
 
     final rawTasks = json['tasks'] as List<dynamic>? ?? const [];
 
+    final scheduledAtRaw = json['scheduledAt'] as String?;
+
     return FocusProject(
       id: json['id'] as String,
       name: json['name'] as String,
       durationMinutes: json['durationMinutes'] as int,
       status: status,
+      scheduledAt: scheduledAtRaw == null
+          ? null
+          : DateTime.tryParse(scheduledAtRaw),
       tasks: rawTasks
           .map(
             (task) =>

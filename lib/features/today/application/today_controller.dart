@@ -226,6 +226,33 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void scheduleProject({
+    required String projectId,
+    required DateTime scheduledAt,
+  }) {
+    state = [
+      for (final project in state)
+        if (project.id == projectId)
+          project.copyWith(scheduledAt: scheduledAt)
+        else
+          project,
+    ];
+
+    _persist();
+  }
+
+  void clearProjectSchedule(String projectId) {
+    state = [
+      for (final project in state)
+        if (project.id == projectId)
+          project.copyWith(clearScheduledAt: true)
+        else
+          project,
+    ];
+
+    _persist();
+  }
+
   void deleteTask({required String projectId, required String taskId}) {
     state = [
       for (final project in state)
