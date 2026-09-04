@@ -143,6 +143,18 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void updateProjectNotes({required String projectId, required String notes}) {
+    state = [
+      for (final project in state)
+        if (project.id == projectId)
+          project.copyWith(notes: notes)
+        else
+          project,
+    ];
+
+    _persist();
+  }
+
   void deleteProject(String projectId) {
     FocusProject? project;
 

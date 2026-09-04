@@ -60,20 +60,60 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 32),
+
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _ProjectsPanel(projects: projects),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 3,
-                      child: _ActiveProjectPanel(project: activeProject),
-                    ),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 900;
+                    final showNotesPanel =
+                        constraints.maxWidth >= 1050 &&
+                        activeProject.notes.trim().isNotEmpty;
+                    if (!isWide) {
+                      return SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 420,
+                              child: _ProjectsPanel(projects: projects),
+                            ),
+                            const SizedBox(height: 24),
+                            _ActiveProjectPanel(project: activeProject),
+                            if (activeProject.notes.trim().isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                height: 320,
+                                child: _ProjectNotesPanel(
+                                  project: activeProject,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: _ProjectsPanel(projects: projects),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: showNotesPanel ? 3 : 5,
+                          child: _ActiveProjectPanel(project: activeProject),
+                        ),
+                        if (showNotesPanel) ...[
+                          const SizedBox(width: 24),
+                          Expanded(
+                            flex: 2,
+                            child: _ProjectNotesPanel(project: activeProject),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -147,6 +187,62 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       });
     }
   }
+}
+
+Future<void> _editProjectNotes(
+  BuildContext context,
+  FocusProject project,
+) async {
+  final notesController = TextEditingController(text: project.notes);
+
+  final notes = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text('Notes — ${project.name}'),
+        content: SizedBox(
+          width: 520,
+          child: TextField(
+            controller: notesController,
+            autofocus: true,
+            minLines: 10,
+            maxLines: 18,
+            decoration: const InputDecoration(
+              hintText:
+                  'Idées, remarques, décisions, liens, points à vérifier...',
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Annuler'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop(notesController.text);
+            },
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Enregistrer'),
+          ),
+        ],
+      );
+    },
+  );
+
+  notesController.dispose();
+
+  if (notes == null || !context.mounted) {
+    return;
+  }
+
+  ProviderScope.containerOf(context)
+      .read(todayProjectsProvider.notifier)
+      .updateProjectNotes(projectId: project.id, notes: notes);
 }
 
 class _ProjectsPanel extends StatelessWidget {
@@ -268,6 +364,7 @@ class _ProjectsPanel extends StatelessWidget {
                   },
                   onSchedule: () =>
                       _showScheduleProjectDialog(context, project),
+                  onNotes: () => _editProjectNotes(context, project),
                 ),
               );
             },
@@ -619,6 +716,7 @@ class _ProjectCard extends ConsumerWidget {
     required this.reorderIndex,
     required this.onSchedule,
     required this.onStart,
+    required this.onNotes,
   });
 
   final FocusProject project;
@@ -628,6 +726,7 @@ class _ProjectCard extends ConsumerWidget {
   final int reorderIndex;
   final VoidCallback onSchedule;
   final VoidCallback onStart;
+  final VoidCallback onNotes;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -755,6 +854,8 @@ class _ProjectCard extends ConsumerWidget {
                     ProviderScope.containerOf(context)
                         .read(todayProjectsProvider.notifier)
                         .clearProjectSchedule(project.id);
+                  } else if (value == 'notes') {
+                    onNotes();
                   }
                 },
                 itemBuilder: (context) => [
@@ -772,13 +873,12 @@ class _ProjectCard extends ConsumerWidget {
                           : 'Modifier la programmation',
                     ),
                   ),
-
                   if (project.scheduledAt != null)
                     const PopupMenuItem(
                       value: 'clearSchedule',
                       child: Text('Supprimer la programmation'),
                     ),
-
+                  PopupMenuItem(value: 'notes', child: Text('Notes')),
                   PopupMenuItem(
                     value: 'delete',
                     enabled: !active,
@@ -802,6 +902,68 @@ class _ProjectCard extends ConsumerWidget {
     final minute = dateTime.minute.toString().padLeft(2, '0');
 
     return '$day/$month · $hour:$minute';
+  }
+}
+
+class _ProjectNotesPanel extends StatelessWidget {
+  const _ProjectNotesPanel({required this.project});
+
+  final FocusProject project;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 3,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.sticky_note_2_outlined,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Notes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Modifier les notes',
+                  onPressed: () => _editProjectNotes(context, project),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      project.notes,
+                      style: const TextStyle(fontSize: 14, height: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -845,7 +1007,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
               project.name,
               style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 28),
             Center(
               child: Text(
                 _formatSeconds(remainingSeconds),
@@ -938,27 +1100,6 @@ class _ActiveProjectPanel extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showEditTaskDialog(context, ref, project, task),
                 ),
-
-            /*
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(
-                    task.title,
-                    style: TextStyle(
-                      decoration: task.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
-                  ),
-                  value: task.isCompleted,
-                  onChanged: (_) {
-                    ref
-                        .read(todayProjectsProvider.notifier)
-                        .toggleTask(project.id, task.id);
-                  },
-                ),
-          */
           ],
         ),
       ),

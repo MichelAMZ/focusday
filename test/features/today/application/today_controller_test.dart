@@ -322,4 +322,25 @@ void main() {
       1,
     );
   });
+
+  test('met à jour les notes d’un projet', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.updateProjectNotes(
+      projectId: 'bogoka',
+      notes: 'Préparer la prochaine émission et vérifier le micro.',
+    );
+
+    final project = container
+        .read(todayProjectsProvider)
+        .firstWhere((project) => project.id == 'bogoka');
+
+    expect(
+      project.notes,
+      'Préparer la prochaine émission et vérifier le micro.',
+    );
+  });
 }

@@ -10,6 +10,7 @@ class FocusProject {
     required this.tasks,
     this.status = FocusProjectStatus.waiting,
     this.scheduledAt,
+    this.notes = '',
   });
 
   final String id;
@@ -18,6 +19,7 @@ class FocusProject {
   final List<FocusTask> tasks;
   final FocusProjectStatus status;
   final DateTime? scheduledAt;
+  final String notes;
 
   FocusProject copyWith({
     String? id,
@@ -27,6 +29,7 @@ class FocusProject {
     FocusProjectStatus? status,
     DateTime? scheduledAt,
     bool clearScheduledAt = false,
+    String? notes,
   }) {
     return FocusProject(
       id: id ?? this.id,
@@ -35,6 +38,7 @@ class FocusProject {
       tasks: tasks ?? this.tasks,
       status: status ?? this.status,
       scheduledAt: clearScheduledAt ? null : scheduledAt ?? this.scheduledAt,
+      notes: notes ?? this.notes,
     );
   }
 
@@ -45,6 +49,7 @@ class FocusProject {
       'durationMinutes': durationMinutes,
       'status': status.name,
       'scheduledAt': scheduledAt?.toIso8601String(),
+      'notes': notes,
       'tasks': tasks.map((task) => task.toJson()).toList(),
     };
   }
@@ -70,6 +75,7 @@ class FocusProject {
       scheduledAt: scheduledAtRaw == null
           ? null
           : DateTime.tryParse(scheduledAtRaw),
+      notes: json['notes'] as String? ?? '',
       tasks: rawTasks
           .map(
             (task) =>
