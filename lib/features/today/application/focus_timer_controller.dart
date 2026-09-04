@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/storage_provider.dart';
 import 'focus_timer_state.dart';
+import '../../../core/audio/focus_completion_sound_provider.dart';
 
 final focusTimerProvider =
     NotifierProvider<FocusTimerController, FocusTimerState>(
@@ -124,6 +125,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       final newEndTime = DateTime.now().add(Duration(seconds: newRemaining));
 
       state = state.copyWith(
+        initialSeconds: state.initialSeconds + secondsToAdd,
         remainingSeconds: newRemaining,
         endTime: newEndTime,
       );
@@ -134,6 +136,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
     }
 
     state = state.copyWith(
+      initialSeconds: state.initialSeconds + secondsToAdd,
       remainingSeconds: state.remainingSeconds + secondsToAdd,
     );
 
@@ -193,6 +196,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
 
       _persist();
 
+      unawaited(ref.read(focusCompletionSoundProvider).play());
       return;
     }
 

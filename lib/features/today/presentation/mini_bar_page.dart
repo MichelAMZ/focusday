@@ -68,95 +68,104 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
 
     final timerColor = _timerColor(context, remainingSeconds);
 
+    final progress = _timerProgress(timer.initialSeconds, remainingSeconds);
+
     _updateBlinking(timer.status, remainingSeconds);
 
     return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(
-            color: _borderVisible ? timerColor : Colors.transparent,
-            width: remainingSeconds <= 60 ? 3 : 2,
-          ),
+      body: CustomPaint(
+        foregroundPainter: _MiniBarProgressBorderPainter(
+          progress: progress,
+          color: timerColor,
+          backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+          strokeWidth: _borderVisible ? (remainingSeconds <= 60 ? 4 : 3) : 0,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    timer.status == FocusTimerStatus.running
-                        ? Icons.radio_button_checked
-                        : Icons.circle_outlined,
-                    size: 16,
-                    color: timerColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      activeProject.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Text(
-                    _formatSeconds(remainingSeconds),
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      timer.status == FocusTimerStatus.running
+                          ? Icons.radio_button_checked
+                          : Icons.circle_outlined,
+                      size: 16,
                       color: timerColor,
-                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
-                  ),
-                  const Spacer(),
-                  _TimerActionButton(timer: timer),
-                  IconButton(
-                    tooltip: 'Restaurer FocusDay',
-                    onPressed: () {
-                      ref
-                          .read(focusWindowModeProvider.notifier)
-                          .restoreNormalMode();
-                    },
-                    icon: const Icon(Icons.open_in_full),
-                  ),
-                  IconButton(
-                    tooltip: 'Fermer FocusDay',
-                    onPressed: () {
-                      ref.read(focusWindowModeProvider.notifier).closeApp();
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _formatDateTime(_now),
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        activeProject.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 18),
+                    Text(
+                      _formatSeconds(remainingSeconds),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: timerColor,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const Spacer(),
+                    _TimerActionButton(timer: timer),
+                    IconButton(
+                      tooltip: 'Restaurer FocusDay',
+                      onPressed: () {
+                        ref
+                            .read(focusWindowModeProvider.notifier)
+                            .restoreNormalMode();
+                      },
+                      icon: const Icon(Icons.open_in_full),
+                    ),
+                    IconButton(
+                      tooltip: 'Fermer FocusDay',
+                      onPressed: () {
+                        ref.read(focusWindowModeProvider.notifier).closeApp();
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _formatDateTime(_now),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -210,6 +219,16 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
     });
   }
 
+  static double _timerProgress(int initialSeconds, int remainingSeconds) {
+    if (initialSeconds <= 0) {
+      return 1.0;
+    }
+
+    final progress = 1 - (remainingSeconds / initialSeconds);
+
+    return progress.clamp(0.0, 1.0);
+  }
+
   static Color _timerColor(BuildContext context, int remainingSeconds) {
     if (remainingSeconds <= 60) {
       return Colors.red.shade700;
@@ -245,6 +264,70 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
     final minute = dateTime.minute.toString().padLeft(2, '0');
 
     return '$day/$month  $hour:$minute';
+  }
+}
+
+class _MiniBarProgressBorderPainter extends CustomPainter {
+  const _MiniBarProgressBorderPainter({
+    required this.progress,
+    required this.color,
+    required this.backgroundColor,
+    required this.strokeWidth,
+  });
+
+  final double progress;
+  final Color color;
+  final Color backgroundColor;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+
+    final path = Path()..addRect(rect);
+
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    canvas.drawPath(path, backgroundPaint);
+
+    if (progress <= 0 || color.a == 0) {
+      return;
+    }
+
+    final metrics = path.computeMetrics();
+
+    if (metrics.isEmpty) {
+      return;
+    }
+
+    final metric = metrics.first;
+    final visibleLength = metric.length * progress.clamp(0.0, 1.0);
+
+    final visiblePath = metric.extractPath(0, visibleLength);
+
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawPath(visiblePath, progressPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniBarProgressBorderPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }
 

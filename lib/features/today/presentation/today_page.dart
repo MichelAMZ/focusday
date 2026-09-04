@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../projects/domain/focus_project.dart';
@@ -797,7 +797,8 @@ class _ProjectCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                    if (schedulePhase == ProjectSchedulePhase.due)
+                    if (schedulePhase == ProjectSchedulePhase.due &&
+                        project.status != FocusProjectStatus.active)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Text(
@@ -1030,12 +1031,37 @@ class _ActiveProjectPanel extends ConsumerWidget {
             ),
             const SizedBox(height: 28),
             Center(
-              child: Text(
-                _formatSeconds(remainingSeconds),
-                style: const TextStyle(
-                  fontSize: 58,
-                  fontWeight: FontWeight.w300,
-                  fontFeatures: [FontFeature.tabularFigures()],
+              child: SizedBox(
+                width: 190,
+                height: 190,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox.expand(
+                      child: CircularProgressIndicator(
+                        value: _timerProgress(
+                          timer.initialSeconds,
+                          remainingSeconds,
+                        ),
+                        strokeWidth: 10,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _timerColor(context, remainingSeconds),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatSeconds(remainingSeconds),
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w300,
+                        color: _timerColor(context, remainingSeconds),
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1429,6 +1455,32 @@ class _ActiveProjectPanel extends ConsumerWidget {
       case FocusTimerStatus.completed:
         return 'session terminée';
     }
+  }
+
+  static double _timerProgress(int initialSeconds, int remainingSeconds) {
+    if (initialSeconds <= 0) {
+      return 1.0;
+    }
+
+    final progress = 1 - (remainingSeconds / initialSeconds);
+
+    return progress.clamp(0.0, 1.0);
+  }
+
+  static Color _timerColor(BuildContext context, int remainingSeconds) {
+    if (remainingSeconds <= 60) {
+      return Colors.red.shade700;
+    }
+
+    if (remainingSeconds <= 300) {
+      return Colors.orange.shade800;
+    }
+
+    if (remainingSeconds <= 600) {
+      return Colors.green.shade700;
+    }
+
+    return Theme.of(context).colorScheme.primary;
   }
 
   static String _formatSeconds(int seconds) {
