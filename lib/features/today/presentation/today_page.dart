@@ -50,14 +50,35 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Aujourd’hui',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Concentre-toi sur un seul projet à la fois.',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/images/focusday_logo_cropped.png',
+                    height: 54,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Aujourd’hui',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Concentre-toi sur un seul projet à la fois.',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 
