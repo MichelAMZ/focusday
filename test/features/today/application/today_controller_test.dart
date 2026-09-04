@@ -297,4 +297,29 @@ void main() {
 
     expect(project.scheduledAt, isNull);
   });
+
+  test('démarre un projet en attente et remplace le projet actif', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(todayProjectsProvider.notifier);
+
+    controller.startProject('dotnet');
+
+    final projects = container.read(todayProjectsProvider);
+
+    expect(projects.first.id, 'dotnet');
+    expect(projects.first.status, FocusProjectStatus.active);
+
+    final bogoka = projects.firstWhere((project) => project.id == 'bogoka');
+
+    expect(bogoka.status, FocusProjectStatus.waiting);
+
+    expect(
+      projects
+          .where((project) => project.status == FocusProjectStatus.active)
+          .length,
+      1,
+    );
+  });
 }

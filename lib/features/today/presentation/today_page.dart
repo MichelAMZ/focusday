@@ -10,12 +10,26 @@ import '../application/focus_timer_state.dart';
 import '../../../core/window/window_mode_controller.dart';
 import '../../projects/domain/focus_task.dart';
 
-class TodayPage extends ConsumerWidget {
+import '../application/project_schedule_controller.dart';
+import '../application/project_schedule_state.dart';
+
+class TodayPage extends ConsumerStatefulWidget {
   const TodayPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayPage> createState() => _TodayPageState();
+}
+
+class _TodayPageState extends ConsumerState<TodayPage> {
+  final Map<String, ProjectSchedulePhase> _previousSchedulePhases = {};
+  bool _scheduleAlertPending = false;
+
+  @override
+  Widget build(BuildContext context) {
     final projects = ref.watch(todayProjectsProvider);
+    final scheduleState = ref.watch(projectScheduleProvider);
+
+    _checkScheduleAlerts(projects, scheduleState);
 
     final activeProject = projects.firstWhere(
       (project) => project.status == FocusProjectStatus.active,
@@ -67,6 +81,71 @@ class TodayPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _checkScheduleAlerts(
+    List<FocusProject> projects,
+    ProjectScheduleState scheduleState,
+  ) {
+    if (_scheduleAlertPending) {
+      return;
+    }
+
+    for (final project in projects) {
+      final scheduledAt = project.scheduledAt;
+
+      if (scheduledAt == null || project.status == FocusProjectStatus.active) {
+        continue;
+      }
+
+      final scheduleKey = '${project.id}:${scheduledAt.toIso8601String()}';
+
+      final currentPhase = scheduleState.phaseFor(scheduledAt);
+      final previousPhase = _previousSchedulePhases[scheduleKey];
+
+      _previousSchedulePhases[scheduleKey] = currentPhase;
+
+      if (previousPhase == ProjectSchedulePhase.soon &&
+          currentPhase == ProjectSchedulePhase.due) {
+        _scheduleAlertPending = true;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+
+          _showScheduleAlert(project);
+        });
+
+        return;
+      }
+    }
+  }
+
+  Future<void> _showScheduleAlert(FocusProject project) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Projet à démarrer'),
+          content: Text('Il est temps de démarrer "${project.name}".'),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _scheduleAlertPending = false;
+      });
+    }
   }
 }
 
@@ -156,6 +235,29 @@ class _ProjectsPanel extends StatelessWidget {
                     container
                         .read(todayProjectsProvider.notifier)
                         .reactivateProject(project.id);
+
+                    container
+                        .read(focusTimerProvider.notifier)
+                        .reset(
+                          projectId: project.id,
+                          durationMinutes: project.durationMinutes,
+                        );
+                  },
+                  onStart: () async {
+                    final confirmed = await _confirmStartProject(
+                      context,
+                      project,
+                    );
+
+                    if (!confirmed || !context.mounted) {
+                      return;
+                    }
+
+                    final container = ProviderScope.containerOf(context);
+
+                    container
+                        .read(todayProjectsProvider.notifier)
+                        .startProject(project.id);
 
                     container
                         .read(focusTimerProvider.notifier)
@@ -419,6 +521,52 @@ class _ProjectsPanel extends StatelessWidget {
     ).read(todayProjectsProvider.notifier).deleteProject(project.id);
   }
 
+  Future<bool> _confirmStartProject(
+    BuildContext context,
+    FocusProject project,
+  ) async {
+    final container = ProviderScope.containerOf(context);
+    final projects = container.read(todayProjectsProvider);
+
+    FocusProject? activeProject;
+
+    for (final item in projects) {
+      if (item.status == FocusProjectStatus.active && item.id != project.id) {
+        activeProject = item;
+        break;
+      }
+    }
+
+    if (activeProject == null) {
+      return true;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Changer de projet ?'),
+          content: Text(
+            '"${activeProject!.name}" est actuellement actif.\n\n'
+            'Voulez-vous passer à "${project.name}" ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Changer de projet'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed == true;
+  }
+
   Future<void> _showScheduleProjectDialog(
     BuildContext context,
     FocusProject project,
@@ -462,7 +610,7 @@ class _ProjectsPanel extends StatelessWidget {
   }
 }
 
-class _ProjectCard extends StatelessWidget {
+class _ProjectCard extends ConsumerWidget {
   const _ProjectCard({
     required this.project,
     required this.onEdit,
@@ -470,6 +618,7 @@ class _ProjectCard extends StatelessWidget {
     required this.onReactivate,
     required this.reorderIndex,
     required this.onSchedule,
+    required this.onStart,
   });
 
   final FocusProject project;
@@ -478,10 +627,15 @@ class _ProjectCard extends StatelessWidget {
   final VoidCallback onReactivate;
   final int reorderIndex;
   final VoidCallback onSchedule;
+  final VoidCallback onStart;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final active = project.status == FocusProjectStatus.active;
+
+    final scheduleState = ref.watch(projectScheduleProvider);
+
+    final schedulePhase = scheduleState.phaseFor(project.scheduledAt);
 
     return Opacity(
       opacity: active ? 1 : 0.38,
@@ -499,15 +653,64 @@ class _ProjectCard extends StatelessWidget {
                     : Icons.schedule,
               ),
               const SizedBox(width: 12),
+
               Expanded(
-                child: Text(
-                  project.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (schedulePhase == ProjectSchedulePhase.soon)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Bientôt',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ),
+                    if (schedulePhase == ProjectSchedulePhase.due)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'À démarrer',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    if (schedulePhase == ProjectSchedulePhase.due &&
+                        project.status != FocusProjectStatus.active)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: TextButton.icon(
+                          onPressed: onStart,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: const Icon(Icons.play_arrow, size: 18),
+                          label: const Text('Démarrer'),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [

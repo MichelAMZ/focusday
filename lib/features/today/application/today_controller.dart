@@ -321,6 +321,28 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void startProject(String projectId) {
+    final targetExists = state.any((project) => project.id == projectId);
+
+    if (!targetExists) {
+      return;
+    }
+
+    final updatedProjects = [
+      for (final project in state)
+        if (project.id == projectId)
+          project.copyWith(status: FocusProjectStatus.active)
+        else if (project.status == FocusProjectStatus.active)
+          project.copyWith(status: FocusProjectStatus.waiting)
+        else
+          project,
+    ];
+
+    state = _sortProjectsByPriority(updatedProjects);
+
+    _persist();
+  }
+
   void reorderWaitingProject({
     required String projectId,
     required int newWaitingIndex,
