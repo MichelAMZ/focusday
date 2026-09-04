@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../projects/domain/focus_project.dart';
@@ -780,10 +780,34 @@ class _ProjectCard extends ConsumerWidget {
                   children: [
                     Text(
                       project.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
+                      children: [
+                        Text(
+                          '${project.durationMinutes} min',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        if (project.scheduledAt != null)
+                          Text(
+                            _formatScheduledAt(project.scheduledAt!),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                      ],
                     ),
                     if (schedulePhase == ProjectSchedulePhase.soon)
                       const Padding(
@@ -831,22 +855,6 @@ class _ProjectCard extends ConsumerWidget {
                   ],
                 ),
               ),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('${project.durationMinutes} min'),
-                  if (project.scheduledAt != null)
-                    Text(
-                      _formatScheduledAt(project.scheduledAt!),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 8),
 
               if (project.status == FocusProjectStatus.waiting) ...[
                 const SizedBox(width: 8),
