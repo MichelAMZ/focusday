@@ -1,0 +1,111 @@
+{
+  "@@locale": "fr",
+  "appTitle": "FocusDay",
+  "todayTitle": "Aujourd’hui",
+  "todaySubtitle": "Concentre-toi sur un seul projet à la fois.",
+  "settingsTitle": "Paramètres",
+  "focusSectionTitle": "Focus",
+  "completionSoundTitle": "Son de fin de focus",
+  "completionSoundSubtitle": "Joue un son lorsque le minuteur atteint 00:00.",
+  "scheduledAlertsTitle": "Alertes des projets planifiés",
+  "scheduledAlertsSubtitle": "Affiche une alerte lorsqu’un projet atteint son heure de démarrage.",
+  "miniBarLabel": "Mini-bar",
+  "projectDueTitle": "Projet à démarrer",
+  "projectDueMessage": "Il est temps de démarrer \"{projectName}\".",
+  "@projectDueMessage": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "okButton": "OK",
+  "settingsTooltip": "Paramètres",
+  "notesTitle": "Notes — {projectName}",
+  "@notesTitle": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "notesHint": "Idées, remarques, décisions, liens, points à vérifier...",
+  "cancelButton": "Annuler",
+  "saveButton": "Enregistrer",
+  "projectsOfDayTitle": "Projets du jour",
+  "addButton": "Ajouter",
+  "newProjectTitle": "Nouveau projet",
+  "projectNameLabel": "Nom du projet",
+  "durationMinutesLabel": "Durée en minutes",
+  "task1Label": "Tâche 1",
+  "task2Label": "Tâche 2",
+  "editProjectTitle": "Modifier le projet",
+  "activeProjectDeleteError": "Impossible de supprimer le projet actif.",
+  "deleteProjectTitle": "Supprimer le projet ?",
+  "deleteProjectMessage": "Le projet \"{projectName}\" sera supprimé.",
+  "@deleteProjectMessage": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteButton": "Supprimer",
+  "changeProjectTitle": "Changer de projet ?",
+  "changeProjectMessage": "\"{activeProjectName}\" est actuellement actif.\n\nVoulez-vous passer à \"{projectName}\" ?",
+  "@changeProjectMessage": {
+    "placeholders": {
+      "activeProjectName": {
+        "type": "String"
+      },
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "changeProjectButton": "Changer de projet",
+  "scheduleSoonLabel": "Bientôt",
+  "scheduleDueLabel": "À démarrer",
+  "startButton": "Démarrer",
+  "changePriorityTooltip": "Modifier la priorité",
+  "actionsTooltip": "Actions",
+  "editButton": "Modifier",
+  "reactivateButton": "Réactiver",
+  "scheduleButton": "Programmer",
+  "editScheduleButton": "Modifier la programmation",
+  "clearScheduleButton": "Supprimer la programmation",
+  "notesMenuItem": "Notes",
+  "deleteUnavailableLabel": "Suppression impossible",
+  "notesPanelTitle": "Notes",
+  "editNotesTooltip": "Modifier les notes",
+  "tasksTitle": "Tâches",
+  "noTasksMessage": "Aucune tâche pour ce projet.",
+  "addTaskTitle": "Ajouter une tâche",
+  "taskLabel": "Tâche",
+  "taskExampleHint": "Ex. Lancer les tests",
+  "taskDetailsTitle": "Détails de la tâche",
+  "taskTitleLabel": "Titre",
+  "taskDescriptionLabel": "Description",
+  "taskDescriptionHint": "Ajouter les détails de cette tâche...",
+  "prepareButton": "Préparer",
+  "pauseButton": "Pause",
+  "finishButton": "Terminer",
+  "resumeButton": "Reprendre",
+  "completedButton": "Terminé",
+  "timerStatusWaiting": "EN ATTENTE",
+  "timerStatusReady": "PRÊT",
+  "timerStatusRunning": "EN COURS",
+  "timerStatusPaused": "EN PAUSE",
+  "timerStatusCompleted": "TERMINÉ",
+  "timerCaptionPlannedDuration": "durée prévue",
+  "timerCaptionReady": "prêt à démarrer",
+  "timerCaptionRemaining": "restantes",
+  "timerCaptionPaused": "en pause",
+  "timerCaptionCompleted": "session terminée",
+  "languageSectionTitle": "Langue",
+  "languagePreferenceTitle": "Langue de l’application",
+  "languageAutomatic": "Automatique",
+  "languageAutomaticSubtitle": "Utiliser la langue du système.",
+  "languageFrench": "Français",
+  "languageEnglish": "English"
+}

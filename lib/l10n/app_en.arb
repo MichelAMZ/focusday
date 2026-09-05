@@ -1,0 +1,111 @@
+{
+  "@@locale": "en",
+  "appTitle": "FocusDay",
+  "todayTitle": "Today",
+  "todaySubtitle": "Focus on one project at a time.",
+  "settingsTitle": "Settings",
+  "focusSectionTitle": "Focus",
+  "completionSoundTitle": "Focus completion sound",
+  "completionSoundSubtitle": "Plays a sound when the timer reaches 00:00.",
+  "scheduledAlertsTitle": "Scheduled project alerts",
+  "scheduledAlertsSubtitle": "Shows an alert when a project reaches its scheduled start time.",
+  "miniBarLabel": "Mini-bar",
+  "projectDueTitle": "Project ready to start",
+  "projectDueMessage": "It is time to start \"{projectName}\".",
+  "@projectDueMessage": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "okButton": "OK",
+  "settingsTooltip": "Settings",
+  "notesTitle": "Notes — {projectName}",
+  "@notesTitle": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "notesHint": "Ideas, notes, decisions, links, things to check...",
+  "cancelButton": "Cancel",
+  "saveButton": "Save",
+  "projectsOfDayTitle": "Today's projects",
+  "addButton": "Add",
+  "newProjectTitle": "New project",
+  "projectNameLabel": "Project name",
+  "durationMinutesLabel": "Duration in minutes",
+  "task1Label": "Task 1",
+  "task2Label": "Task 2",
+  "editProjectTitle": "Edit project",
+  "activeProjectDeleteError": "The active project cannot be deleted.",
+  "deleteProjectTitle": "Delete project?",
+  "deleteProjectMessage": "The project \"{projectName}\" will be deleted.",
+  "@deleteProjectMessage": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteButton": "Delete",
+  "changeProjectTitle": "Switch project?",
+  "changeProjectMessage": "\"{activeProjectName}\" is currently active.\n\nDo you want to switch to \"{projectName}\"?",
+  "@changeProjectMessage": {
+    "placeholders": {
+      "activeProjectName": {
+        "type": "String"
+      },
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+  "changeProjectButton": "Switch project",
+  "scheduleSoonLabel": "Soon",
+  "scheduleDueLabel": "Ready to start",
+  "startButton": "Start",
+  "changePriorityTooltip": "Change priority",
+  "actionsTooltip": "Actions",
+  "editButton": "Edit",
+  "reactivateButton": "Reactivate",
+  "scheduleButton": "Schedule",
+  "editScheduleButton": "Edit schedule",
+  "clearScheduleButton": "Remove schedule",
+  "notesMenuItem": "Notes",
+  "deleteUnavailableLabel": "Cannot delete",
+  "notesPanelTitle": "Notes",
+  "editNotesTooltip": "Edit notes",
+  "tasksTitle": "Tasks",
+  "noTasksMessage": "No tasks for this project.",
+  "addTaskTitle": "Add task",
+  "taskLabel": "Task",
+  "taskExampleHint": "E.g. Run the tests",
+  "taskDetailsTitle": "Task details",
+  "taskTitleLabel": "Title",
+  "taskDescriptionLabel": "Description",
+  "taskDescriptionHint": "Add details about this task...",
+  "prepareButton": "Prepare",
+  "pauseButton": "Pause",
+  "finishButton": "Finish",
+  "resumeButton": "Resume",
+  "completedButton": "Completed",
+  "timerStatusWaiting": "WAITING",
+  "timerStatusReady": "READY",
+  "timerStatusRunning": "IN PROGRESS",
+  "timerStatusPaused": "PAUSED",
+  "timerStatusCompleted": "COMPLETED",
+  "timerCaptionPlannedDuration": "planned duration",
+  "timerCaptionReady": "ready to start",
+  "timerCaptionRemaining": "remaining",
+  "timerCaptionPaused": "paused",
+  "timerCaptionCompleted": "session completed",
+  "languageSectionTitle": "Language",
+  "languagePreferenceTitle": "Application language",
+  "languageAutomatic": "Automatic",
+  "languageAutomaticSubtitle": "Use the system language.",
+  "languageFrench": "Français",
+  "languageEnglish": "English"
+}

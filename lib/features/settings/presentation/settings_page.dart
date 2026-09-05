@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../application/settings_controller.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -8,14 +9,60 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Param\u00e8tres')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text('Focus', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            l10n.languageSectionTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: DropdownButtonFormField<AppLanguagePreference>(
+                initialValue: settings.languagePreference,
+                decoration: InputDecoration(
+                  labelText: l10n.languagePreferenceTitle,
+                  prefixIcon: const Icon(Icons.language_outlined),
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: AppLanguagePreference.system,
+                    child: Text(l10n.languageAutomatic),
+                  ),
+                  DropdownMenuItem(
+                    value: AppLanguagePreference.french,
+                    child: Text(l10n.languageFrench),
+                  ),
+                  DropdownMenuItem(
+                    value: AppLanguagePreference.english,
+                    child: Text(l10n.languageEnglish),
+                  ),
+                ],
+                onChanged: (preference) {
+                  if (preference == null) {
+                    return;
+                  }
+
+                  ref
+                      .read(settingsProvider.notifier)
+                      .setLanguagePreference(preference);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.focusSectionTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 12),
           Card(
             child: Column(
@@ -28,10 +75,8 @@ class SettingsPage extends ConsumerWidget {
                         .setCompletionSoundEnabled(enabled);
                   },
                   secondary: const Icon(Icons.music_note_outlined),
-                  title: const Text('Son de fin de focus'),
-                  subtitle: const Text(
-                    'Joue un son lorsque le minuteur atteint 00:00.',
-                  ),
+                  title: Text(l10n.completionSoundTitle),
+                  subtitle: Text(l10n.completionSoundSubtitle),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
@@ -42,10 +87,8 @@ class SettingsPage extends ConsumerWidget {
                         .setScheduledProjectAlertsEnabled(enabled);
                   },
                   secondary: const Icon(Icons.alarm_outlined),
-                  title: const Text('Alertes des projets planifiés'),
-                  subtitle: const Text(
-                    'Affiche une alerte lorsqu’un projet atteint son heure de démarrage.',
-                  ),
+                  title: Text(l10n.scheduledAlertsTitle),
+                  subtitle: Text(l10n.scheduledAlertsSubtitle),
                 ),
               ],
             ),

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/window/window_mode_controller.dart';
+import 'l10n/app_localizations.dart';
 import 'features/projects/domain/focus_project.dart';
+import 'features/settings/application/settings_controller.dart';
 import 'features/today/application/focus_timer_controller.dart';
 import 'features/today/application/focus_timer_state.dart';
 import 'features/today/application/today_controller.dart';
@@ -24,12 +26,29 @@ class _FocusDayAppState extends ConsumerState<FocusDayApp> {
     final windowMode = ref.watch(focusWindowModeProvider);
     final timer = ref.watch(focusTimerProvider);
     final projects = ref.watch(todayProjectsProvider);
+    final settings = ref.watch(settingsProvider);
+
+    final locale = switch (settings.languagePreference) {
+      AppLanguagePreference.system => null,
+      AppLanguagePreference.french => const Locale('fr'),
+      AppLanguagePreference.english => const Locale('en'),
+    };
 
     _scheduleCompletedProjectSync(timer, projects);
 
     return MaterialApp(
-      title: 'FocusDay',
+      locale: locale,
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale?.languageCode == 'fr') {
+          return const Locale('fr');
+        }
+
+        return const Locale('en');
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4F46E5)),
         useMaterial3: true,

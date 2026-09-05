@@ -14,6 +14,7 @@ class FocusDayStorage {
       'focusday.settings.completionSoundEnabled';
   static const _scheduledProjectAlertsEnabledKey =
       'focusday.settings.scheduledProjectAlertsEnabled';
+  static const _languagePreferenceKey = 'focusday.settings.languagePreference';
 
   List<FocusProject>? loadProjects() {
     final raw = preferences.getString(_projectsKey);
@@ -96,5 +97,13 @@ class FocusDayStorage {
 
   Future<void> saveScheduledProjectAlertsEnabled(bool enabled) async {
     await preferences.setBool(_scheduledProjectAlertsEnabledKey, enabled);
+  }
+
+  String? loadLanguagePreference() {
+    return preferences.getString(_languagePreferenceKey);
+  }
+
+  Future<void> saveLanguagePreference(String preference) async {
+    await preferences.setString(_languagePreferenceKey, preference);
   }
 }

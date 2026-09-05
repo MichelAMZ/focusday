@@ -11,6 +11,7 @@ import '../../../core/window/window_mode_controller.dart';
 import '../../projects/domain/focus_task.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../settings/presentation/settings_page.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -28,6 +29,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final projects = ref.watch(todayProjectsProvider);
     final scheduleState = ref.watch(projectScheduleProvider);
 
@@ -48,7 +50,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           ref.read(focusWindowModeProvider.notifier).enterMiniMode();
         },
         icon: const Icon(Icons.view_stream_outlined),
-        label: const Text('Mini-bar'),
+        label: Text(l10n.miniBarLabel),
       ),
       body: SafeArea(
         child: Padding(
@@ -68,8 +70,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Aujourd’hui',
+                        Text(
+                          l10n.todayTitle,
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
@@ -77,7 +79,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Concentre-toi sur un seul projet à la fois.',
+                          l10n.todaySubtitle,
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.grey.shade600,
@@ -87,7 +89,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Paramètres',
+                    tooltip: l10n.settingsTooltip,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -203,18 +205,19 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   }
 
   Future<void> _showScheduleAlert(FocusProject project) async {
+    final l10n = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Projet à démarrer'),
-          content: Text('Il est temps de démarrer "${project.name}".'),
+          title: Text(l10n.projectDueTitle),
+          content: Text(l10n.projectDueMessage(project.name)),
           actions: [
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('OK'),
+              child: Text(l10n.okButton),
             ),
           ],
         );
@@ -234,12 +237,13 @@ Future<void> _editProjectNotes(
   FocusProject project,
 ) async {
   final notesController = TextEditingController(text: project.notes);
+  final l10n = AppLocalizations.of(context)!;
 
   final notes = await showDialog<String>(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: Text('Notes — ${project.name}'),
+        title: Text(l10n.notesTitle(project.name)),
         content: SizedBox(
           width: 520,
           child: TextField(
@@ -247,9 +251,8 @@ Future<void> _editProjectNotes(
             autofocus: true,
             minLines: 10,
             maxLines: 18,
-            decoration: const InputDecoration(
-              hintText:
-                  'Idées, remarques, décisions, liens, points à vérifier...',
+            decoration: InputDecoration(
+              hintText: l10n.notesHint,
               alignLabelWithHint: true,
               border: OutlineInputBorder(),
             ),
@@ -260,14 +263,14 @@ Future<void> _editProjectNotes(
             onPressed: () {
               Navigator.of(dialogContext).pop();
             },
-            child: const Text('Annuler'),
+            child: Text(l10n.cancelButton),
           ),
           FilledButton.icon(
             onPressed: () {
               Navigator.of(dialogContext).pop(notesController.text);
             },
             icon: const Icon(Icons.save_outlined),
-            label: const Text('Enregistrer'),
+            label: Text(l10n.saveButton),
           ),
         ],
       );
@@ -295,22 +298,31 @@ class _ProjectsPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          alignment: WrapAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Projets du jour',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            TextButton.icon(
-              onPressed: () => _showAddProjectDialog(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter'),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final l10n = AppLocalizations.of(context)!;
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.projectsOfDayTitle,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _showAddProjectDialog(context),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addButton),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
 
@@ -419,12 +431,13 @@ class _ProjectsPanel extends StatelessWidget {
     final durationController = TextEditingController(text: '30');
     final task1Controller = TextEditingController();
     final task2Controller = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Nouveau projet'),
+          title: Text(l10n.newProjectTitle),
           content: SizedBox(
             width: 420,
             child: SingleChildScrollView(
@@ -433,27 +446,27 @@ class _ProjectsPanel extends StatelessWidget {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom du projet',
+                    decoration: InputDecoration(
+                      labelText: l10n.projectNameLabel,
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: durationController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Durée en minutes',
+                    decoration: InputDecoration(
+                      labelText: l10n.durationMinutesLabel,
                     ),
                   ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: task1Controller,
-                    decoration: const InputDecoration(labelText: 'Tâche 1'),
+                    decoration: InputDecoration(labelText: l10n.task1Label),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: task2Controller,
-                    decoration: const InputDecoration(labelText: 'Tâche 2'),
+                    decoration: InputDecoration(labelText: l10n.task2Label),
                   ),
                 ],
               ),
@@ -462,7 +475,7 @@ class _ProjectsPanel extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () {
@@ -483,7 +496,7 @@ class _ProjectsPanel extends StatelessWidget {
                   ],
                 });
               },
-              child: const Text('Ajouter'),
+              child: Text(l10n.addButton),
             ),
           ],
         );
@@ -542,6 +555,7 @@ class _ProjectsPanel extends StatelessWidget {
     BuildContext context,
     FocusProject project,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: project.name);
 
     final durationController = TextEditingController(
@@ -552,7 +566,7 @@ class _ProjectsPanel extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Modifier le projet'),
+          title: Text(l10n.editProjectTitle),
           content: SizedBox(
             width: 420,
             child: Column(
@@ -560,14 +574,14 @@ class _ProjectsPanel extends StatelessWidget {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nom du projet'),
+                  decoration: InputDecoration(labelText: l10n.projectNameLabel),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: durationController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Durée en minutes',
+                  decoration: InputDecoration(
+                    labelText: l10n.durationMinutesLabel,
                   ),
                 ),
               ],
@@ -576,7 +590,7 @@ class _ProjectsPanel extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () {
@@ -593,7 +607,7 @@ class _ProjectsPanel extends StatelessWidget {
                   'duration': duration,
                 });
               },
-              child: const Text('Enregistrer'),
+              child: Text(l10n.saveButton),
             ),
           ],
         );
@@ -620,12 +634,12 @@ class _ProjectsPanel extends StatelessWidget {
     BuildContext context,
     FocusProject project,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (project.status == FocusProjectStatus.active) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible de supprimer le projet actif.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.activeProjectDeleteError)));
       return;
     }
 
@@ -633,16 +647,16 @@ class _ProjectsPanel extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer le projet ?'),
-          content: Text('Le projet "${project.name}" sera supprimé.'),
+          title: Text(l10n.deleteProjectTitle),
+          content: Text(l10n.deleteProjectMessage(project.name)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Supprimer'),
+              child: Text(l10n.deleteButton),
             ),
           ],
         );
@@ -662,6 +676,7 @@ class _ProjectsPanel extends StatelessWidget {
     BuildContext context,
     FocusProject project,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final container = ProviderScope.containerOf(context);
     final projects = container.read(todayProjectsProvider);
 
@@ -682,19 +697,18 @@ class _ProjectsPanel extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Changer de projet ?'),
+          title: Text(l10n.changeProjectTitle),
           content: Text(
-            '"${activeProject!.name}" est actuellement actif.\n\n'
-            'Voulez-vous passer à "${project.name}" ?',
+            l10n.changeProjectMessage(activeProject!.name, project.name),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Changer de projet'),
+              child: Text(l10n.changeProjectButton),
             ),
           ],
         );
@@ -770,6 +784,7 @@ class _ProjectCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final active = project.status == FocusProjectStatus.active;
 
     final scheduleState = ref.watch(projectScheduleProvider);
@@ -829,11 +844,11 @@ class _ProjectCard extends ConsumerWidget {
                       ],
                     ),
                     if (schedulePhase == ProjectSchedulePhase.soon)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Bientôt',
-                          style: TextStyle(
+                          l10n.scheduleSoonLabel,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.orange,
@@ -842,11 +857,11 @@ class _ProjectCard extends ConsumerWidget {
                       ),
                     if (schedulePhase == ProjectSchedulePhase.due &&
                         project.status != FocusProjectStatus.active)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'À démarrer',
-                          style: TextStyle(
+                          l10n.scheduleDueLabel,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.red,
@@ -868,7 +883,7 @@ class _ProjectCard extends ConsumerWidget {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           icon: const Icon(Icons.play_arrow, size: 18),
-                          label: const Text('Démarrer'),
+                          label: Text(l10n.startButton),
                         ),
                       ),
                   ],
@@ -879,8 +894,8 @@ class _ProjectCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 ReorderableDragStartListener(
                   index: reorderIndex,
-                  child: const Tooltip(
-                    message: 'Modifier la priorité',
+                  child: Tooltip(
+                    message: l10n.changePriorityTooltip,
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: Icon(Icons.drag_indicator),
@@ -889,7 +904,7 @@ class _ProjectCard extends ConsumerWidget {
                 ),
               ],
               PopupMenuButton<String>(
-                tooltip: 'Actions',
+                tooltip: l10n.actionsTooltip,
                 onSelected: (value) {
                   if (value == 'edit') {
                     onEdit();
@@ -908,31 +923,34 @@ class _ProjectCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                  PopupMenuItem(value: 'edit', child: Text(l10n.editButton)),
                   if (project.status == FocusProjectStatus.completed)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'reactivate',
-                      child: Text('Réactiver'),
+                      child: Text(l10n.reactivateButton),
                     ),
                   PopupMenuItem(
                     value: 'schedule',
                     child: Text(
                       project.scheduledAt == null
-                          ? 'Programmer'
-                          : 'Modifier la programmation',
+                          ? l10n.scheduleButton
+                          : l10n.editScheduleButton,
                     ),
                   ),
                   if (project.scheduledAt != null)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'clearSchedule',
-                      child: Text('Supprimer la programmation'),
+                      child: Text(l10n.clearScheduleButton),
                     ),
-                  PopupMenuItem(value: 'notes', child: Text('Notes')),
+                  PopupMenuItem(
+                    value: 'notes',
+                    child: Text(l10n.notesMenuItem),
+                  ),
                   PopupMenuItem(
                     value: 'delete',
                     enabled: !active,
                     child: Text(
-                      active ? 'Suppression impossible' : 'Supprimer',
+                      active ? l10n.deleteUnavailableLabel : l10n.deleteButton,
                     ),
                   ),
                 ],
@@ -961,6 +979,8 @@ class _ProjectNotesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 3,
       clipBehavior: Clip.antiAlias,
@@ -977,13 +997,16 @@ class _ProjectNotesPanel extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Notes',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                Text(
+                  l10n.notesPanelTitle,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Modifier les notes',
+                  tooltip: l10n.editNotesTooltip,
                   onPressed: () => _editProjectNotes(context, project),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                 ),
@@ -1023,6 +1046,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final completedTasks = project.tasks
         .where((task) => task.isCompleted)
         .length;
@@ -1045,7 +1069,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _statusLabel(timer, isCurrentTimer),
+              _statusLabel(timer, isCurrentTimer, l10n),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5,
@@ -1095,7 +1119,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                _timerCaption(timer, isCurrentTimer),
+                _timerCaption(timer, isCurrentTimer, l10n),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
             ),
@@ -1111,6 +1135,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
                   isCurrentTimer: isCurrentTimer,
                   project: project,
                   controller: timerController,
+                  l10n: l10n,
                 ),
               ),
             ),
@@ -1120,15 +1145,18 @@ class _ActiveProjectPanel extends ConsumerWidget {
 
             Row(
               children: [
-                const Text(
-                  'Tâches',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.tasksTitle,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 TextButton.icon(
                   onPressed: () => _showAddTaskDialog(context, ref, project),
                   icon: const Icon(Icons.add),
-                  label: const Text('Ajouter'),
+                  label: Text(l10n.addButton),
                 ),
                 const Spacer(),
                 Text(
@@ -1141,7 +1169,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
             const SizedBox(height: 12),
             if (project.tasks.isEmpty)
               Text(
-                'Aucune tâche pour ce projet.',
+                l10n.noTasksMessage,
                 style: TextStyle(color: Colors.grey.shade600),
               )
             else
@@ -1185,21 +1213,22 @@ class _ActiveProjectPanel extends ConsumerWidget {
     WidgetRef ref,
     FocusProject project,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
 
     final title = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Ajouter une tâche'),
+          title: Text(l10n.addTaskTitle),
           content: SizedBox(
             width: 420,
             child: TextField(
               controller: controller,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Tâche',
-                hintText: 'Ex. Lancer les tests',
+              decoration: InputDecoration(
+                labelText: l10n.taskLabel,
+                hintText: l10n.taskExampleHint,
               ),
               onSubmitted: (value) {
                 final trimmed = value.trim();
@@ -1213,7 +1242,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () {
@@ -1223,7 +1252,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
                   Navigator.of(dialogContext).pop(value);
                 }
               },
-              child: const Text('Ajouter'),
+              child: Text(l10n.addButton),
             ),
           ],
         );
@@ -1247,6 +1276,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
     FocusProject project,
     FocusTask task,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final titleController = TextEditingController(text: task.title);
     final descriptionController = TextEditingController(text: task.description);
 
@@ -1254,7 +1284,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Détails de la tâche'),
+          title: Text(l10n.taskDetailsTitle),
           content: SizedBox(
             width: 460,
             child: Column(
@@ -1263,16 +1293,16 @@ class _ActiveProjectPanel extends ConsumerWidget {
                 TextField(
                   controller: titleController,
                   autofocus: true,
-                  decoration: const InputDecoration(labelText: 'Titre'),
+                  decoration: InputDecoration(labelText: l10n.taskTitleLabel),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: descriptionController,
                   minLines: 4,
                   maxLines: 8,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    hintText: 'Ajouter les détails de cette tâche...',
+                  decoration: InputDecoration(
+                    labelText: l10n.taskDescriptionLabel,
+                    hintText: l10n.taskDescriptionHint,
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -1282,7 +1312,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButton),
             ),
             FilledButton(
               onPressed: () {
@@ -1297,7 +1327,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
                   'description': descriptionController.text.trim(),
                 });
               },
-              child: const Text('Enregistrer'),
+              child: Text(l10n.saveButton),
             ),
           ],
         );
@@ -1327,6 +1357,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
     required bool isCurrentTimer,
     required FocusProject project,
     required FocusTimerController controller,
+    required AppLocalizations l10n,
   }) {
     if (!isCurrentTimer) {
       return [
@@ -1338,7 +1369,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
             );
           },
           icon: const Icon(Icons.timer_outlined),
-          label: const Text('Préparer'),
+          label: Text(l10n.prepareButton),
         ),
       ];
     }
@@ -1349,7 +1380,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           FilledButton.icon(
             onPressed: controller.start,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('Démarrer'),
+            label: Text(l10n.startButton),
           ),
         ];
 
@@ -1358,7 +1389,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           FilledButton.tonalIcon(
             onPressed: controller.pause,
             icon: const Icon(Icons.pause),
-            label: const Text('Pause'),
+            label: Text(l10n.pauseButton),
           ),
           OutlinedButton.icon(
             onPressed: () => controller.addMinutes(15),
@@ -1392,7 +1423,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.check),
-            label: const Text('Terminer'),
+            label: Text(l10n.finishButton),
           ),
         ];
 
@@ -1401,7 +1432,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
           FilledButton.icon(
             onPressed: controller.resume,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('Reprendre'),
+            label: Text(l10n.resumeButton),
           ),
           OutlinedButton.icon(
             onPressed: () => controller.addMinutes(15),
@@ -1435,7 +1466,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.check),
-            label: const Text('Terminer'),
+            label: Text(l10n.finishButton),
           ),
         ];
 
@@ -1444,43 +1475,51 @@ class _ActiveProjectPanel extends ConsumerWidget {
           FilledButton.icon(
             onPressed: null,
             icon: const Icon(Icons.check_circle),
-            label: const Text('Terminé'),
+            label: Text(l10n.completedButton),
           ),
         ];
     }
   }
 
-  static String _statusLabel(FocusTimerState timer, bool isCurrentTimer) {
+  static String _statusLabel(
+    FocusTimerState timer,
+    bool isCurrentTimer,
+    AppLocalizations l10n,
+  ) {
     if (!isCurrentTimer) {
-      return 'EN ATTENTE';
+      return l10n.timerStatusWaiting;
     }
 
     switch (timer.status) {
       case FocusTimerStatus.idle:
-        return 'PRÊT';
+        return l10n.timerStatusReady;
       case FocusTimerStatus.running:
-        return 'EN COURS';
+        return l10n.timerStatusRunning;
       case FocusTimerStatus.paused:
-        return 'EN PAUSE';
+        return l10n.timerStatusPaused;
       case FocusTimerStatus.completed:
-        return 'TERMINÉ';
+        return l10n.timerStatusCompleted;
     }
   }
 
-  static String _timerCaption(FocusTimerState timer, bool isCurrentTimer) {
+  static String _timerCaption(
+    FocusTimerState timer,
+    bool isCurrentTimer,
+    AppLocalizations l10n,
+  ) {
     if (!isCurrentTimer) {
-      return 'durée prévue';
+      return l10n.timerCaptionPlannedDuration;
     }
 
     switch (timer.status) {
       case FocusTimerStatus.idle:
-        return 'prêt à démarrer';
+        return l10n.timerCaptionReady;
       case FocusTimerStatus.running:
-        return 'restantes';
+        return l10n.timerCaptionRemaining;
       case FocusTimerStatus.paused:
-        return 'en pause';
+        return l10n.timerCaptionPaused;
       case FocusTimerStatus.completed:
-        return 'session terminée';
+        return l10n.timerCaptionCompleted;
     }
   }
 
