@@ -98,7 +98,13 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color:
+                timer.status == FocusTimerStatus.running &&
+                    remainingSeconds > 0 &&
+                    remainingSeconds <= 300 &&
+                    !_borderVisible
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Theme.of(context).colorScheme.surface,
           ),
           child: Material(
             color: Colors.transparent,
@@ -191,7 +197,9 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
 
   void _updateBlinking(FocusTimerStatus status, int remainingSeconds) {
     final shouldBlink =
-        status == FocusTimerStatus.running && remainingSeconds <= 300;
+        status == FocusTimerStatus.running &&
+        remainingSeconds > 0 &&
+        remainingSeconds <= 300;
 
     if (!shouldBlink) {
       if (_blinkTicker != null) {
