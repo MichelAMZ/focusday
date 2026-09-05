@@ -255,4 +255,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get windowsStartupSubtitle => 'Lancer automatiquement FocusDay à l’ouverture de votre session Windows.';
+
+  @override
+  String get miniBarNoProject => 'Aucun projet';
+
+  @override
+  String get miniBarRestoreTooltip => 'Restaurer FocusDay';
+
+  @override
+  String get miniBarCloseTooltip => 'Fermer FocusDay';
 }

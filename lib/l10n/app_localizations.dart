@@ -574,6 +574,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatically launch FocusDay when you sign in to Windows.'**
   String get windowsStartupSubtitle;
+
+  /// No description provided for @miniBarNoProject.
+  ///
+  /// In en, this message translates to:
+  /// **'No project'**
+  String get miniBarNoProject;
+
+  /// No description provided for @miniBarRestoreTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore FocusDay'**
+  String get miniBarRestoreTooltip;
+
+  /// No description provided for @miniBarCloseTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close FocusDay'**
+  String get miniBarCloseTooltip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

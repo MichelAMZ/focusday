@@ -110,5 +110,8 @@
   "languageEnglish": "English",
   "windowsStartupSectionTitle": "Windows startup",
   "windowsStartupTitle": "Start FocusDay with Windows",
-  "windowsStartupSubtitle": "Automatically launch FocusDay when you sign in to Windows."
+  "windowsStartupSubtitle": "Automatically launch FocusDay when you sign in to Windows.",
+  "miniBarNoProject": "No project",
+  "miniBarRestoreTooltip": "Restore FocusDay",
+  "miniBarCloseTooltip": "Close FocusDay"
 }

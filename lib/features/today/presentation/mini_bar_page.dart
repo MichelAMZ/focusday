@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/window/window_mode_controller.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../projects/domain/focus_project.dart';
 import '../application/focus_timer_controller.dart';
 import '../application/focus_timer_state.dart';
@@ -23,6 +24,7 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
   Timer? _blinkTicker;
   bool _borderVisible = true;
   int? _lastBlinkSpeedMs;
+  bool _blinkUpdateScheduled = false;
 
   @override
   void initState() {
@@ -48,11 +50,12 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final projects = ref.watch(todayProjectsProvider);
     final timer = ref.watch(focusTimerProvider);
 
     if (projects.isEmpty) {
-      return const Scaffold(body: Center(child: Text('Aucun projet')));
+      return Scaffold(body: Center(child: Text(l10n.miniBarNoProject)));
     }
 
     final activeProject = projects.firstWhere(
@@ -70,7 +73,19 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
 
     final progress = _timerProgress(timer.initialSeconds, remainingSeconds);
 
-    _updateBlinking(timer.status, remainingSeconds);
+    if (!_blinkUpdateScheduled) {
+      _blinkUpdateScheduled = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _blinkUpdateScheduled = false;
+
+        if (!mounted) {
+          return;
+        }
+
+        _updateBlinking(timer.status, remainingSeconds);
+      });
+    }
 
     return Scaffold(
       body: CustomPaint(
@@ -127,7 +142,7 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
                     const Spacer(),
                     _TimerActionButton(timer: timer),
                     IconButton(
-                      tooltip: 'Restaurer FocusDay',
+                      tooltip: l10n.miniBarRestoreTooltip,
                       onPressed: () {
                         ref
                             .read(focusWindowModeProvider.notifier)
@@ -136,7 +151,7 @@ class _MiniBarPageState extends ConsumerState<MiniBarPage> {
                       icon: const Icon(Icons.open_in_full),
                     ),
                     IconButton(
-                      tooltip: 'Fermer FocusDay',
+                      tooltip: l10n.miniBarCloseTooltip,
                       onPressed: () {
                         ref.read(focusWindowModeProvider.notifier).closeApp();
                       },
@@ -338,33 +353,34 @@ class _TimerActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(focusTimerProvider.notifier);
 
     switch (timer.status) {
       case FocusTimerStatus.idle:
         return IconButton(
-          tooltip: 'Démarrer',
+          tooltip: l10n.startButton,
           onPressed: controller.start,
           icon: const Icon(Icons.play_arrow),
         );
 
       case FocusTimerStatus.running:
         return IconButton(
-          tooltip: 'Pause',
+          tooltip: l10n.pauseButton,
           onPressed: controller.pause,
           icon: const Icon(Icons.pause),
         );
 
       case FocusTimerStatus.paused:
         return IconButton(
-          tooltip: 'Reprendre',
+          tooltip: l10n.resumeButton,
           onPressed: controller.resume,
           icon: const Icon(Icons.play_arrow),
         );
 
       case FocusTimerStatus.completed:
-        return const IconButton(
-          tooltip: 'Terminé',
+        return IconButton(
+          tooltip: l10n.completedButton,
           onPressed: null,
           icon: Icon(Icons.check_circle),
         );
