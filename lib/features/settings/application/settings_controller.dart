@@ -3,14 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/storage_provider.dart';
 
 class SettingsState {
-  const SettingsState({this.completionSoundEnabled = true});
+  const SettingsState({
+    this.completionSoundEnabled = true,
+    this.scheduledProjectAlertsEnabled = true,
+  });
 
   final bool completionSoundEnabled;
+  final bool scheduledProjectAlertsEnabled;
 
-  SettingsState copyWith({bool? completionSoundEnabled}) {
+  SettingsState copyWith({
+    bool? completionSoundEnabled,
+    bool? scheduledProjectAlertsEnabled,
+  }) {
     return SettingsState(
       completionSoundEnabled:
           completionSoundEnabled ?? this.completionSoundEnabled,
+      scheduledProjectAlertsEnabled:
+          scheduledProjectAlertsEnabled ?? this.scheduledProjectAlertsEnabled,
     );
   }
 }
@@ -26,6 +35,8 @@ class SettingsController extends Notifier<SettingsState> {
 
     return SettingsState(
       completionSoundEnabled: storage?.loadCompletionSoundEnabled() ?? true,
+      scheduledProjectAlertsEnabled:
+          storage?.loadScheduledProjectAlertsEnabled() ?? true,
     );
   }
 
@@ -35,5 +46,13 @@ class SettingsController extends Notifier<SettingsState> {
     final storage = ref.read(focusDayStorageProvider);
 
     await storage?.saveCompletionSoundEnabled(enabled);
+  }
+
+  Future<void> setScheduledProjectAlertsEnabled(bool enabled) async {
+    state = state.copyWith(scheduledProjectAlertsEnabled: enabled);
+
+    final storage = ref.read(focusDayStorageProvider);
+
+    await storage?.saveScheduledProjectAlertsEnabled(enabled);
   }
 }

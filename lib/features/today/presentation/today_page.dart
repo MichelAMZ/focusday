@@ -9,6 +9,7 @@ import '../application/focus_timer_state.dart';
 
 import '../../../core/window/window_mode_controller.dart';
 import '../../projects/domain/focus_task.dart';
+import '../../settings/application/settings_controller.dart';
 import '../../settings/presentation/settings_page.dart';
 
 import '../application/project_schedule_controller.dart';
@@ -30,7 +31,11 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     final projects = ref.watch(todayProjectsProvider);
     final scheduleState = ref.watch(projectScheduleProvider);
 
-    _checkScheduleAlerts(projects, scheduleState);
+    final settings = ref.watch(settingsProvider);
+
+    if (settings.scheduledProjectAlertsEnabled) {
+      _checkScheduleAlerts(projects, scheduleState);
+    }
 
     final activeProject = projects.firstWhere(
       (project) => project.status == FocusProjectStatus.active,
