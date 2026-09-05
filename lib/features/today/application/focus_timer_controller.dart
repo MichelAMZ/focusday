@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/storage_provider.dart';
 import 'focus_timer_state.dart';
 import '../../../core/audio/focus_completion_sound_provider.dart';
+import '../../settings/application/settings_controller.dart';
 
 final focusTimerProvider =
     NotifierProvider<FocusTimerController, FocusTimerState>(
@@ -196,7 +197,11 @@ class FocusTimerController extends Notifier<FocusTimerState> {
 
       _persist();
 
-      unawaited(ref.read(focusCompletionSoundProvider).play());
+      final settings = ref.read(settingsProvider);
+
+      if (settings.completionSoundEnabled) {
+        unawaited(ref.read(focusCompletionSoundProvider).play());
+      }
       return;
     }
 

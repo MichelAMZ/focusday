@@ -10,6 +10,8 @@ class FocusDayStorage {
 
   static const _projectsKey = 'focusday.projects.v1';
   static const _timerKey = 'focusday.timer.v1';
+  static const _completionSoundEnabledKey =
+      'focusday.settings.completionSoundEnabled';
 
   List<FocusProject>? loadProjects() {
     final raw = preferences.getString(_projectsKey);
@@ -76,5 +78,13 @@ class FocusDayStorage {
 
   Future<void> clearTimer() async {
     await preferences.remove(_timerKey);
+  }
+
+  bool loadCompletionSoundEnabled() {
+    return preferences.getBool(_completionSoundEnabledKey) ?? true;
+  }
+
+  Future<void> saveCompletionSoundEnabled(bool enabled) async {
+    await preferences.setBool(_completionSoundEnabledKey, enabled);
   }
 }

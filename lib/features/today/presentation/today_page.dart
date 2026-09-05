@@ -9,6 +9,7 @@ import '../application/focus_timer_state.dart';
 
 import '../../../core/window/window_mode_controller.dart';
 import '../../projects/domain/focus_task.dart';
+import '../../settings/presentation/settings_page.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -58,25 +59,38 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Aujourd’hui',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Aujourd’hui',
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Concentre-toi sur un seul projet à la fois.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Concentre-toi sur un seul projet à la fois.',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Paramètres',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.settings_outlined),
                   ),
                 ],
               ),
