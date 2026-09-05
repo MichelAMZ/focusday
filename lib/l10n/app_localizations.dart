@@ -556,6 +556,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get languageEnglish;
+
+  /// No description provided for @windowsStartupSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows startup'**
+  String get windowsStartupSectionTitle;
+
+  /// No description provided for @windowsStartupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start FocusDay with Windows'**
+  String get windowsStartupTitle;
+
+  /// No description provided for @windowsStartupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically launch FocusDay when you sign in to Windows.'**
+  String get windowsStartupSubtitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

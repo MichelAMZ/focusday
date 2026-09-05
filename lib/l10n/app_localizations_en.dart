@@ -246,4 +246,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageEnglish => 'English';
+
+  @override
+  String get windowsStartupSectionTitle => 'Windows startup';
+
+  @override
+  String get windowsStartupTitle => 'Start FocusDay with Windows';
+
+  @override
+  String get windowsStartupSubtitle => 'Automatically launch FocusDay when you sign in to Windows.';
 }

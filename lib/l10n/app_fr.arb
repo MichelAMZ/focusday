@@ -107,5 +107,8 @@
   "languageAutomatic": "Automatique",
   "languageAutomaticSubtitle": "Utiliser la langue du système.",
   "languageFrench": "Français",
-  "languageEnglish": "English"
+  "languageEnglish": "English",
+  "windowsStartupSectionTitle": "Démarrage Windows",
+  "windowsStartupTitle": "Démarrer FocusDay avec Windows",
+  "windowsStartupSubtitle": "Lancer automatiquement FocusDay à l’ouverture de votre session Windows."
 }

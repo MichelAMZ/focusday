@@ -6,11 +6,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'core/startup/windows_startup_service.dart';
 import 'core/storage/focusday_storage.dart';
 import 'core/storage/storage_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  const startupService = WindowsStartupService();
+  await startupService.initialize();
 
   if (Platform.isWindows) {
     await windowManager.ensureInitialized();

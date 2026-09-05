@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../application/settings_controller.dart';
+import '../application/startup_controller.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -11,6 +12,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
+    final startupState = ref.watch(startupEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
@@ -91,6 +93,27 @@ class SettingsPage extends ConsumerWidget {
                   subtitle: Text(l10n.scheduledAlertsSubtitle),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.windowsStartupSectionTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: SwitchListTile(
+              value: startupState.value ?? false,
+              onChanged: startupState.isLoading
+                  ? null
+                  : (enabled) async {
+                      await ref
+                          .read(startupEnabledProvider.notifier)
+                          .setEnabled(enabled);
+                    },
+              secondary: const Icon(Icons.power_settings_new_outlined),
+              title: Text(l10n.windowsStartupTitle),
+              subtitle: Text(l10n.windowsStartupSubtitle),
             ),
           ),
         ],
