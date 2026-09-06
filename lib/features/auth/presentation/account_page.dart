@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/cloud/cloud_provider.dart';
+import '../../today/application/today_controller.dart';
 import '../application/auth_controller.dart';
 
 class AccountPage extends ConsumerStatefulWidget {
@@ -89,6 +91,121 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     );
   }
 
+  Future<void> _backupProjectsToCloud(User user) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final projects = ref.read(todayProjectsProvider);
+      final cloudStorage = ref.read(focusDayCloudStorageProvider);
+
+      await cloudStorage.saveProjects(user.uid, projects);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${projects.length} projet(s) sauvegardé(s) dans le cloud.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de la sauvegarde cloud : $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _restoreProjectsFromCloud(User user) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final cloudStorage = ref.read(focusDayCloudStorageProvider);
+      final cloudProjects = await cloudStorage.loadProjects(user.uid);
+
+      if (!mounted) {
+        return;
+      }
+
+      if (cloudProjects.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun projet trouvé dans le cloud.')),
+        );
+        return;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Restaurer depuis le cloud ?'),
+            content: Text(
+              '${cloudProjects.length} projet(s) trouvé(s) dans le cloud. '
+              'Les projets actuellement présents sur cet appareil '
+              'seront remplacés.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Restaurer'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true || !mounted) {
+        return;
+      }
+
+      ref
+          .read(todayProjectsProvider.notifier)
+          .replaceAllProjects(cloudProjects);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${cloudProjects.length} projet(s) restauré(s) depuis le cloud.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de la restauration cloud : $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildSignedIn(User user) {
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -109,10 +226,26 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 Text(user.email ?? 'Compte Firebase'),
                 const SizedBox(height: 8),
                 const Text(
-                  'La sauvegarde cloud sera activée dans l’étape suivante.',
+                  'Vos projets restent enregistrés localement sur cet appareil.',
                 ),
                 const SizedBox(height: 20),
                 FilledButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _backupProjectsToCloud(user),
+                  icon: const Icon(Icons.cloud_upload_outlined),
+                  label: const Text('Sauvegarder dans le cloud'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _restoreProjectsFromCloud(user),
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  label: const Text('Restaurer depuis le cloud'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
                   onPressed: _isLoading
                       ? null
                       : () {

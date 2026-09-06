@@ -396,6 +396,11 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
+  void replaceAllProjects(List<FocusProject> projects) {
+    state = _sortProjectsByPriority(projects);
+    _persist();
+  }
+
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
     final active = projects.where(
       (project) => project.status == FocusProjectStatus.active,
