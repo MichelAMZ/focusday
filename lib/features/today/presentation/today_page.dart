@@ -9,6 +9,8 @@ import '../application/focus_timer_state.dart';
 
 import '../../../core/window/window_mode_controller.dart';
 import '../../projects/domain/focus_task.dart';
+import '../../auth/application/auth_controller.dart';
+import '../../auth/presentation/account_page.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../../../l10n/app_localizations.dart';
@@ -34,6 +36,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     final scheduleState = ref.watch(projectScheduleProvider);
 
     final settings = ref.watch(settingsProvider);
+    final authState = ref.watch(authStateChangesProvider);
 
     if (settings.scheduledProjectAlertsEnabled) {
       _checkScheduleAlerts(projects, scheduleState);
@@ -86,6 +89,55 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  authState.when(
+                    data: (user) {
+                      final email = user?.email?.trim();
+                      final initial = email != null && email.isNotEmpty
+                          ? email.substring(0, 1).toUpperCase()
+                          : '?';
+
+                      return Tooltip(
+                        message: user == null
+                            ? 'Compte non connecté'
+                            : 'Connecté : ${email ?? 'Compte Firebase'}',
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => const AccountPage(),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: user == null
+                                ? const CircleAvatar(
+                                    radius: 18,
+                                    child: Icon(Icons.person_outline, size: 20),
+                                  )
+                                : user.photoURL != null &&
+                                      user.photoURL!.isNotEmpty
+                                ? CircleAvatar(
+                                    radius: 18,
+                                    backgroundImage: NetworkImage(
+                                      user.photoURL!,
+                                    ),
+                                  )
+                                : CircleAvatar(
+                                    radius: 18,
+                                    child: Text(initial),
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const SizedBox(width: 52, height: 52),
+                    error: (error, stackTrace) => const CircleAvatar(
+                      radius: 18,
+                      child: Icon(Icons.person_outline, size: 20),
                     ),
                   ),
                   IconButton(

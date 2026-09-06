@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../auth/presentation/account_page.dart';
 import '../application/settings_controller.dart';
 import '../application/startup_controller.dart';
 
@@ -93,6 +94,27 @@ class SettingsPage extends ConsumerWidget {
                   subtitle: Text(l10n.scheduledAlertsSubtitle),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Compte & Cloud',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.cloud_outlined),
+              title: const Text('Compte & Cloud'),
+              subtitle: const Text(
+                'Connexion et sauvegarde de vos données FocusDay.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AccountPage()),
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),
