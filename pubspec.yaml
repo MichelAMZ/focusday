@@ -43,6 +43,9 @@ dependencies:
   audioplayers: ^6.8.1
   launch_at_startup: ^0.5.1
   screen_retriever: ^0.2.2
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
 
 dev_dependencies:
   flutter_test:
