@@ -168,7 +168,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                       return Tooltip(
                         message: user == null
                             ? 'Compte non connecté'
-                            : 'Connecté : ${email ?? 'Compte Firebase'}',
+                            : 'Connecté : ${user.displayName ?? email ?? 'Compte Firebase'}',
                         child: InkWell(
                           customBorder: const CircleBorder(),
                           onTap: () {
@@ -185,12 +185,17 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                                     radius: 18,
                                     child: Icon(Icons.person_outline, size: 20),
                                   )
-                                : user.photoURL != null &&
-                                      user.photoURL!.isNotEmpty
-                                ? CircleAvatar(
-                                    radius: 18,
-                                    backgroundImage: NetworkImage(
+                                : user.photoURL?.trim().isNotEmpty == true
+                                ? ClipOval(
+                                    child: Image.network(
                                       user.photoURL!,
+                                      width: 36,
+                                      height: 36,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => CircleAvatar(
+                                        radius: 18,
+                                        child: Text(initial),
+                                      ),
                                     ),
                                   )
                                 : CircleAvatar(

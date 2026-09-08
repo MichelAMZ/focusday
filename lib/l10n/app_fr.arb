@@ -120,5 +120,15 @@
   "syncFirstRequired": "Première synchronisation : choisissez sauvegarder ou restaurer.",
   "syncPending": "Une modification locale récente reste à synchroniser.",
   "syncError": "Synchronisation momentanément indisponible.",
-  "syncChoose": "Choisir"
+  "syncChoose": "Choisir",
+  "authOrSeparator": "ou",
+  "continueWithGoogle": "Continuer avec Google",
+  "googleSignInLoading": "Connexion en cours…",
+  "googleSignInCancelled": "Connexion Google annulée.",
+  "googleSignInFailed": "Impossible de se connecter avec Google.",
+  "googleAccountCollision": "Un compte existe déjà avec une autre méthode de connexion.",
+  "googleNetworkError": "Réseau indisponible. Vérifiez votre connexion et réessayez.",
+  "googlePopupBlocked": "La fenêtre de connexion Google a été bloquée par le navigateur.",
+  "googleSignInUnavailable": "La connexion Google n’est pas disponible.",
+  "googleTooManyRequests": "Trop de tentatives. Réessayez plus tard."
 }

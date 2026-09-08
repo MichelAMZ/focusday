@@ -634,6 +634,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose'**
   String get syncChoose;
+
+  /// No description provided for @authOrSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOrSeparator;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @googleSignInLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get googleSignInLoading;
+
+  /// No description provided for @googleSignInCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in cancelled.'**
+  String get googleSignInCancelled;
+
+  /// No description provided for @googleSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to sign in with Google.'**
+  String get googleSignInFailed;
+
+  /// No description provided for @googleAccountCollision.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists with another sign-in method.'**
+  String get googleAccountCollision;
+
+  /// No description provided for @googleNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network unavailable. Check your connection and try again.'**
+  String get googleNetworkError;
+
+  /// No description provided for @googlePopupBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The Google sign-in window was blocked by the browser.'**
+  String get googlePopupBlocked;
+
+  /// No description provided for @googleSignInUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in is not available.'**
+  String get googleSignInUnavailable;
+
+  /// No description provided for @googleTooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Try again later.'**
+  String get googleTooManyRequests;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

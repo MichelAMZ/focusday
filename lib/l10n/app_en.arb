@@ -120,5 +120,15 @@
   "syncFirstRequired": "First synchronization: choose backup or restore.",
   "syncPending": "A recent local change is waiting to synchronize.",
   "syncError": "Synchronization is temporarily unavailable.",
-  "syncChoose": "Choose"
+  "syncChoose": "Choose",
+  "authOrSeparator": "or",
+  "continueWithGoogle": "Continue with Google",
+  "googleSignInLoading": "Signing in…",
+  "googleSignInCancelled": "Google sign-in cancelled.",
+  "googleSignInFailed": "Unable to sign in with Google.",
+  "googleAccountCollision": "An account already exists with another sign-in method.",
+  "googleNetworkError": "Network unavailable. Check your connection and try again.",
+  "googlePopupBlocked": "The Google sign-in window was blocked by the browser.",
+  "googleSignInUnavailable": "Google sign-in is not available.",
+  "googleTooManyRequests": "Too many attempts. Try again later."
 }

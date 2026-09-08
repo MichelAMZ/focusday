@@ -6,6 +6,8 @@ import '../../../core/cloud/cloud_provider.dart';
 import '../../../core/storage/storage_provider.dart';
 import '../../today/application/today_controller.dart';
 import '../application/auth_controller.dart';
+import '../application/auth_gateway.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AccountPage extends ConsumerStatefulWidget {
   const AccountPage({super.key});
@@ -59,6 +61,42 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       }
     }
   }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final outcome = await ref.read(authControllerProvider).signInWithGoogle();
+      if (mounted && outcome == GoogleSignInOutcome.cancelled) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.googleSignInCancelled)));
+      }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_googleAuthMessage(error, l10n))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _googleAuthMessage(
+    FirebaseAuthException error,
+    AppLocalizations l10n,
+  ) => switch (error.code) {
+    'account-exists-with-different-credential' ||
+    'credential-already-in-use' => l10n.googleAccountCollision,
+    'network-request-failed' => l10n.googleNetworkError,
+    'popup-blocked' => l10n.googlePopupBlocked,
+    'operation-not-allowed' ||
+    'unsupported-platform' => l10n.googleSignInUnavailable,
+    'too-many-requests' => l10n.googleTooManyRequests,
+    _ => l10n.googleSignInFailed,
+  };
 
   String _firebaseMessage(FirebaseAuthException error) {
     return switch (error.code) {
@@ -255,6 +293,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
   }
 
   Widget _buildSignedIn(User user) {
+    final displayName = user.displayName?.trim();
+    final email = user.email?.trim();
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -264,14 +304,26 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.cloud_done_outlined, size: 40),
+                AccountIdentityAvatar(
+                  displayName: user.displayName,
+                  email: user.email,
+                  photoUrl: user.photoURL,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Compte connecté',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                Text(user.email ?? 'Compte Firebase'),
+                if (displayName != null && displayName.isNotEmpty)
+                  Text(
+                    displayName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                if (email != null && email.isNotEmpty) Text(email),
+                if ((displayName == null || displayName.isEmpty) &&
+                    (email == null || email.isEmpty))
+                  const Text('Compte Firebase'),
                 const SizedBox(height: 8),
                 const Text(
                   'Vos projets restent enregistrés localement sur cet appareil.',
@@ -313,6 +365,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
   }
 
   Widget _buildSignedOut() {
+    final l10n = AppLocalizations.of(context)!;
+    final googleSignInAvailable = ref.watch(googleSignInAvailableProvider);
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -390,7 +444,68 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 },
           child: const Text('Créer un compte'),
         ),
+        if (googleSignInAvailable) ...[
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(l10n.authOrSeparator),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            key: const Key('google-sign-in-button'),
+            onPressed: _isLoading ? null : _signInWithGoogle,
+            icon: const Icon(Icons.login),
+            label: Text(
+              _isLoading ? l10n.googleSignInLoading : l10n.continueWithGoogle,
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class AccountIdentityAvatar extends StatelessWidget {
+  const AccountIdentityAvatar({
+    super.key,
+    this.displayName,
+    this.email,
+    this.photoUrl,
+  });
+
+  final String? displayName;
+  final String? email;
+  final String? photoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedPhotoUrl = photoUrl?.trim();
+    final label = displayName?.trim().isNotEmpty == true
+        ? displayName!.trim()
+        : email?.trim();
+    final fallback = CircleAvatar(
+      radius: 28,
+      child: label == null || label.isEmpty
+          ? const Icon(Icons.person_outline)
+          : Text(label.substring(0, 1).toUpperCase()),
+    );
+    if (normalizedPhotoUrl == null || normalizedPhotoUrl.isEmpty) {
+      return fallback;
+    }
+    return ClipOval(
+      child: Image.network(
+        normalizedPhotoUrl,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
+      ),
     );
   }
 }

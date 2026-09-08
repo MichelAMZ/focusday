@@ -285,4 +285,34 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncChoose => 'Choisir';
+
+  @override
+  String get authOrSeparator => 'ou';
+
+  @override
+  String get continueWithGoogle => 'Continuer avec Google';
+
+  @override
+  String get googleSignInLoading => 'Connexion en cours…';
+
+  @override
+  String get googleSignInCancelled => 'Connexion Google annulée.';
+
+  @override
+  String get googleSignInFailed => 'Impossible de se connecter avec Google.';
+
+  @override
+  String get googleAccountCollision => 'Un compte existe déjà avec une autre méthode de connexion.';
+
+  @override
+  String get googleNetworkError => 'Réseau indisponible. Vérifiez votre connexion et réessayez.';
+
+  @override
+  String get googlePopupBlocked => 'La fenêtre de connexion Google a été bloquée par le navigateur.';
+
+  @override
+  String get googleSignInUnavailable => 'La connexion Google n’est pas disponible.';
+
+  @override
+  String get googleTooManyRequests => 'Trop de tentatives. Réessayez plus tard.';
 }

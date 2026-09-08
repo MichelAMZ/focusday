@@ -285,4 +285,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncChoose => 'Choose';
+
+  @override
+  String get authOrSeparator => 'or';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get googleSignInLoading => 'Signing in…';
+
+  @override
+  String get googleSignInCancelled => 'Google sign-in cancelled.';
+
+  @override
+  String get googleSignInFailed => 'Unable to sign in with Google.';
+
+  @override
+  String get googleAccountCollision => 'An account already exists with another sign-in method.';
+
+  @override
+  String get googleNetworkError => 'Network unavailable. Check your connection and try again.';
+
+  @override
+  String get googlePopupBlocked => 'The Google sign-in window was blocked by the browser.';
+
+  @override
+  String get googleSignInUnavailable => 'Google sign-in is not available.';
+
+  @override
+  String get googleTooManyRequests => 'Too many attempts. Try again later.';
 }
