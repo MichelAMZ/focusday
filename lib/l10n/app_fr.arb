@@ -113,5 +113,12 @@
   "windowsStartupSubtitle": "Lancer automatiquement FocusDay à l’ouverture de votre session Windows.",
   "miniBarNoProject": "Aucun projet",
   "miniBarRestoreTooltip": "Restaurer FocusDay",
-  "miniBarCloseTooltip": "Fermer FocusDay"
+  "miniBarCloseTooltip": "Fermer FocusDay",
+  "syncInProgress": "Synchronisation…",
+  "syncComplete": "Synchronisé.",
+  "syncConflict": "Conflit local/cloud : choisissez une version dans Compte & Cloud.",
+  "syncFirstRequired": "Première synchronisation : choisissez sauvegarder ou restaurer.",
+  "syncPending": "Une modification locale récente reste à synchroniser.",
+  "syncError": "Synchronisation momentanément indisponible.",
+  "syncChoose": "Choisir"
 }

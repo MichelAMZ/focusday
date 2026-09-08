@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'focus_completion_sound_service.dart';
 
-final focusCompletionSoundProvider = Provider<FocusCompletionSoundService>((
+final focusCompletionSoundProvider = Provider<FocusCompletionSoundPlayer>((
   ref,
 ) {
   final service = FocusCompletionSoundService();

@@ -264,4 +264,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get miniBarCloseTooltip => 'Close FocusDay';
+
+  @override
+  String get syncInProgress => 'Synchronizing…';
+
+  @override
+  String get syncComplete => 'Synchronized.';
+
+  @override
+  String get syncConflict => 'Local/cloud conflict: choose a version in Account & Cloud.';
+
+  @override
+  String get syncFirstRequired => 'First synchronization: choose backup or restore.';
+
+  @override
+  String get syncPending => 'A recent local change is waiting to synchronize.';
+
+  @override
+  String get syncError => 'Synchronization is temporarily unavailable.';
+
+  @override
+  String get syncChoose => 'Choose';
 }

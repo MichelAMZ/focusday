@@ -21,6 +21,15 @@ class FocusDayStorage {
   static const _projectsRevisionKey = 'focusday.sync.projectsRevision';
   static const _lastSyncedProjectsRevisionKey =
       'focusday.sync.lastSyncedProjectsRevision';
+  static const _settingsRevisionKey = 'focusday.sync.settingsRevision';
+  static const _lastSyncedSettingsRevisionKey =
+      'focusday.sync.lastSyncedSettingsRevision';
+  static const _settingsLastSyncAtKey = 'focusday.sync.settingsLastSyncAt';
+  static const _focusRevisionKey = 'focusday.sync.focusRevision';
+  static const _lastSyncedFocusRevisionKey =
+      'focusday.sync.lastSyncedFocusRevision';
+  static const _focusLastSyncAtKey = 'focusday.sync.focusLastSyncAt';
+  static const _syncOwnerUidKey = 'focusday.sync.ownerUid';
 
   List<FocusProject>? loadProjects() {
     final raw = preferences.getString(_projectsKey);
@@ -161,5 +170,57 @@ class FocusDayStorage {
     final nextRevision = loadProjectsRevision() + 1;
     await preferences.setInt(_projectsRevisionKey, nextRevision);
     return nextRevision;
+  }
+
+  int loadSettingsRevision() => preferences.getInt(_settingsRevisionKey) ?? 0;
+  int loadLastSyncedSettingsRevision() =>
+      preferences.getInt(_lastSyncedSettingsRevisionKey) ?? 0;
+  DateTime? loadSettingsLastSyncAt() =>
+      _loadUtcDateTime(_settingsLastSyncAtKey);
+  Future<int> incrementSettingsRevision() =>
+      _incrementRevision(_settingsRevisionKey, loadSettingsRevision());
+  Future<void> saveLastSyncedSettingsRevision(int value) =>
+      preferences.setInt(_lastSyncedSettingsRevisionKey, value);
+  Future<void> saveSettingsLastSyncAt(DateTime value) =>
+      _saveUtcDateTime(_settingsLastSyncAtKey, value);
+
+  int loadFocusRevision() => preferences.getInt(_focusRevisionKey) ?? 0;
+  int loadLastSyncedFocusRevision() =>
+      preferences.getInt(_lastSyncedFocusRevisionKey) ?? 0;
+  DateTime? loadFocusLastSyncAt() => _loadUtcDateTime(_focusLastSyncAtKey);
+  Future<int> incrementFocusRevision() =>
+      _incrementRevision(_focusRevisionKey, loadFocusRevision());
+  Future<void> saveLastSyncedFocusRevision(int value) =>
+      preferences.setInt(_lastSyncedFocusRevisionKey, value);
+  Future<void> saveFocusLastSyncAt(DateTime value) =>
+      _saveUtcDateTime(_focusLastSyncAtKey, value);
+
+  String? loadSyncOwnerUid() => preferences.getString(_syncOwnerUidKey);
+  Future<void> saveSyncOwnerUid(String uid) =>
+      preferences.setString(_syncOwnerUidKey, uid);
+
+  /// Associates future synchronization metadata with [uid] without deleting
+  /// any local user data. Domain baselines from another account are discarded.
+  Future<void> prepareSyncOwner(String uid) async {
+    if (loadSyncOwnerUid() == uid) return;
+    await preferences.remove(_settingsLastSyncAtKey);
+    await preferences.remove(_focusLastSyncAtKey);
+    await saveLastSyncedSettingsRevision(loadSettingsRevision());
+    await saveLastSyncedFocusRevision(loadFocusRevision());
+    await saveSyncOwnerUid(uid);
+  }
+
+  DateTime? _loadUtcDateTime(String key) {
+    final raw = preferences.getString(key);
+    return raw == null ? null : DateTime.tryParse(raw)?.toUtc();
+  }
+
+  Future<void> _saveUtcDateTime(String key, DateTime value) =>
+      preferences.setString(key, value.toUtc().toIso8601String());
+
+  Future<int> _incrementRevision(String key, int current) async {
+    final next = current + 1;
+    await preferences.setInt(key, next);
+    return next;
   }
 }

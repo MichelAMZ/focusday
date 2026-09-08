@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/today/application/today_controller.dart';
+import '../../features/today/application/focus_timer_controller.dart';
+import '../../features/settings/application/settings_controller.dart';
 import '../storage/storage_provider.dart';
 import 'focusday_cloud_storage.dart';
 import 'focusday_sync_executor.dart';
 import 'focusday_sync_inspector.dart';
 import 'focusday_sync_coordinator.dart';
+import 'account_sync_executor.dart';
 
 final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
   return FirebaseFirestore.instance;
@@ -58,5 +61,41 @@ final focusDaySyncCoordinatorProvider = Provider<FocusDaySyncCoordinator?>((
   ref,
 ) {
   final executor = ref.watch(focusDaySyncExecutorProvider);
-  return executor == null ? null : FocusDaySyncCoordinator(executor.execute);
+  final localStorage = ref.watch(focusDayStorageProvider);
+  if (executor == null || localStorage == null) return null;
+  final cloudStorage = ref.watch(focusDayCloudStorageProvider);
+  final accountExecutor = AccountSyncExecutor(
+    gateway: cloudStorage,
+    storage: localStorage,
+    applySettings: (value, revision) =>
+        ref.read(settingsProvider.notifier).replaceFromCloud(value, revision),
+    applyFocus: (value, revision) =>
+        ref.read(focusTimerProvider.notifier).replaceFromCloud(value, revision),
+  );
+  return FocusDaySyncCoordinator((userId) async {
+    if (localStorage.loadSyncOwnerUid() != userId) {
+      return SyncExecutionResult.firstSync;
+    }
+    final results = <SyncExecutionResult>[
+      await executor.execute(userId),
+      await accountExecutor.executeSettings(userId),
+      await accountExecutor.executeFocus(userId),
+    ];
+    if (results.contains(SyncExecutionResult.conflict)) {
+      return SyncExecutionResult.conflict;
+    }
+    if (results.contains(SyncExecutionResult.firstSync)) {
+      return SyncExecutionResult.firstSync;
+    }
+    if (results.contains(SyncExecutionResult.localChangedDuringSync)) {
+      return SyncExecutionResult.localChangedDuringSync;
+    }
+    if (results.contains(SyncExecutionResult.uploaded)) {
+      return SyncExecutionResult.uploaded;
+    }
+    if (results.contains(SyncExecutionResult.downloaded)) {
+      return SyncExecutionResult.downloaded;
+    }
+    return SyncExecutionResult.noAction;
+  });
 });

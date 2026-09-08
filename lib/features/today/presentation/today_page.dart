@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
 import '../../projects/domain/focus_project.dart';
 import '../application/today_controller.dart';
@@ -16,6 +17,7 @@ import '../../settings/presentation/settings_page.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/cloud/cloud_provider.dart';
 import '../../../core/cloud/focusday_sync_coordinator.dart';
+import '../../../core/cloud/sync_mutation_bus.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -31,6 +33,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   final Map<String, ProjectSchedulePhase> _previousSchedulePhases = {};
   bool _scheduleAlertPending = false;
   ProviderSubscription<AsyncValue<dynamic>>? _authSyncSubscription;
+  StreamSubscription<SyncDomain>? _mutationSubscription;
   SyncCoordinatorStatus _syncStatus = SyncCoordinatorStatus.idle;
   String? _syncUserId;
 
@@ -64,12 +67,31 @@ class _TodayPageState extends ConsumerState<TodayPage> {
         }
       });
     }, fireImmediately: true);
+    _mutationSubscription = ref.read(syncMutationBusProvider).changes.listen((
+      _,
+    ) {
+      final userId = _syncUserId;
+      if (userId != null) _synchronize(userId);
+    });
   }
 
   @override
   void dispose() {
     _authSyncSubscription?.close();
+    _mutationSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _synchronize(String userId) async {
+    final coordinator = ref.read(focusDaySyncCoordinatorProvider);
+    if (coordinator == null) return;
+    if (mounted) {
+      setState(() => _syncStatus = SyncCoordinatorStatus.synchronizing);
+    }
+    final result = await coordinator.synchronize(userId);
+    if (mounted && _syncUserId == userId) {
+      setState(() => _syncStatus = result);
+    }
   }
 
   @override
@@ -263,35 +285,36 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   }
 
   Widget _buildSyncStatus(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (icon, message, needsAction) = switch (_syncStatus) {
       SyncCoordinatorStatus.synchronizing => (
         Icons.sync,
-        'Synchronisation des projets…',
+        l10n.syncInProgress,
         false,
       ),
       SyncCoordinatorStatus.synchronized => (
         Icons.cloud_done_outlined,
-        'Projets synchronisés.',
+        l10n.syncComplete,
         false,
       ),
       SyncCoordinatorStatus.conflict => (
         Icons.sync_problem,
-        'Conflit local/cloud : choisissez une version depuis Compte & Cloud.',
+        l10n.syncConflict,
         true,
       ),
       SyncCoordinatorStatus.firstSyncRequired => (
         Icons.cloud_sync_outlined,
-        'Première synchronisation : choisissez sauvegarder ou restaurer.',
+        l10n.syncFirstRequired,
         true,
       ),
       SyncCoordinatorStatus.localChangedDuringSync => (
         Icons.cloud_off_outlined,
-        'Une modification locale récente reste à synchroniser.',
+        l10n.syncPending,
         false,
       ),
       SyncCoordinatorStatus.error => (
         Icons.error_outline,
-        'Synchronisation momentanément indisponible.',
+        l10n.syncError,
         false,
       ),
       SyncCoordinatorStatus.idle => (Icons.sync, '', false),
@@ -310,7 +333,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                     builder: (context) => const AccountPage(),
                   ),
                 ),
-                child: const Text('Choisir'),
+                child: Text(l10n.syncChoose),
               )
             : null,
       ),

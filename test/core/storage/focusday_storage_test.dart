@@ -106,4 +106,50 @@ void main() {
 
     expect(storage.loadTimer(), isNull);
   });
+
+  test('sync owner isolates account baselines', () async {
+    final storage = FocusDayStorage(await SharedPreferences.getInstance());
+    expect(storage.loadSyncOwnerUid(), isNull);
+    await storage.saveSyncOwnerUid('user-a');
+    expect(storage.loadSyncOwnerUid(), 'user-a');
+    expect(storage.loadSyncOwnerUid(), isNot('user-b'));
+  });
+
+  test(
+    'switching A to B discards A domain baselines without local deletion',
+    () async {
+      final storage = FocusDayStorage(await SharedPreferences.getInstance());
+      await storage.saveSyncOwnerUid('user-a');
+      await storage.saveSettingsLastSyncAt(DateTime.utc(2026, 1, 1));
+      await storage.saveFocusLastSyncAt(DateTime.utc(2026, 1, 1));
+      await storage.incrementSettingsRevision();
+      await storage.incrementFocusRevision();
+      await storage.saveTimer(
+        const FocusTimerState(
+          projectId: 'local-a',
+          initialSeconds: 60,
+          remainingSeconds: 30,
+          status: FocusTimerStatus.paused,
+        ),
+      );
+
+      await storage.prepareSyncOwner('user-b');
+
+      expect(storage.loadSyncOwnerUid(), 'user-b');
+      expect(storage.loadSettingsLastSyncAt(), isNull);
+      expect(storage.loadFocusLastSyncAt(), isNull);
+      expect(storage.loadLastSyncedSettingsRevision(), 1);
+      expect(storage.loadLastSyncedFocusRevision(), 1);
+      expect(storage.loadTimer()?.projectId, 'local-a');
+    },
+  );
+
+  test('settings and focus revisions are independent and monotone', () async {
+    final storage = FocusDayStorage(await SharedPreferences.getInstance());
+    expect(await storage.incrementSettingsRevision(), 1);
+    expect(await storage.incrementSettingsRevision(), 2);
+    expect(await storage.incrementFocusRevision(), 1);
+    expect(storage.loadSettingsRevision(), 2);
+    expect(storage.loadFocusRevision(), 1);
+  });
 }

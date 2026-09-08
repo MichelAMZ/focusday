@@ -113,6 +113,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       }
 
       await localStorage?.saveLastSyncAt(serverLastSyncAt);
+      await localStorage?.prepareSyncOwner(user.uid);
       await localStorage?.saveLastSyncedProjectsRevision(uploadedRevision);
       if (localStorage?.loadProjectsRevision() == uploadedRevision) {
         await localStorage?.saveProjectsUpdatedAt(serverLastSyncAt);
@@ -215,6 +216,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       }
 
       await localStorage?.saveLastSyncAt(serverLastSyncAt);
+      await localStorage?.prepareSyncOwner(user.uid);
       await localStorage?.saveLastSyncedProjectsRevision(expectedRevision);
       if (localStorage?.loadProjectsRevision() != expectedRevision) {
         throw StateError(

@@ -592,6 +592,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close FocusDay'**
   String get miniBarCloseTooltip;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronizing…'**
+  String get syncInProgress;
+
+  /// No description provided for @syncComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronized.'**
+  String get syncComplete;
+
+  /// No description provided for @syncConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Local/cloud conflict: choose a version in Account & Cloud.'**
+  String get syncConflict;
+
+  /// No description provided for @syncFirstRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'First synchronization: choose backup or restore.'**
+  String get syncFirstRequired;
+
+  /// No description provided for @syncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'A recent local change is waiting to synchronize.'**
+  String get syncPending;
+
+  /// No description provided for @syncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization is temporarily unavailable.'**
+  String get syncError;
+
+  /// No description provided for @syncChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get syncChoose;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

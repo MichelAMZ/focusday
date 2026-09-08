@@ -113,5 +113,12 @@
   "windowsStartupSubtitle": "Automatically launch FocusDay when you sign in to Windows.",
   "miniBarNoProject": "No project",
   "miniBarRestoreTooltip": "Restore FocusDay",
-  "miniBarCloseTooltip": "Close FocusDay"
+  "miniBarCloseTooltip": "Close FocusDay",
+  "syncInProgress": "Synchronizing…",
+  "syncComplete": "Synchronized.",
+  "syncConflict": "Local/cloud conflict: choose a version in Account & Cloud.",
+  "syncFirstRequired": "First synchronization: choose backup or restore.",
+  "syncPending": "A recent local change is waiting to synchronize.",
+  "syncError": "Synchronization is temporarily unavailable.",
+  "syncChoose": "Choose"
 }

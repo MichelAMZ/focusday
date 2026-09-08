@@ -5,6 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/storage_provider.dart';
 import 'focus_timer_state.dart';
 import '../../../core/audio/focus_completion_sound_provider.dart';
+import '../../../core/cloud/account_sync_models.dart';
+import '../../../core/cloud/sync_mutation_bus.dart';
+import '../../settings/application/settings_controller.dart';
+
+final focusClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 final focusTimerProvider =
     NotifierProvider<FocusTimerController, FocusTimerState>(
@@ -13,6 +18,8 @@ final focusTimerProvider =
 
 class FocusTimerController extends Notifier<FocusTimerState> {
   Timer? _ticker;
+  Future<void> _persistence = Future.value();
+  int _mutationGeneration = 0;
 
   @override
   FocusTimerState build() {
@@ -44,7 +51,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       );
     }
 
-    final milliseconds = endTime.difference(DateTime.now()).inMilliseconds;
+    final milliseconds = endTime.difference(_now()).inMilliseconds;
 
     if (milliseconds <= 0) {
       final completedState = savedTimer.copyWith(
@@ -79,9 +86,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       return;
     }
 
-    final endTime = DateTime.now().add(
-      Duration(seconds: state.remainingSeconds),
-    );
+    final endTime = _now().add(Duration(seconds: state.remainingSeconds));
 
     state = state.copyWith(status: FocusTimerStatus.running, endTime: endTime);
 
@@ -94,7 +99,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       return;
     }
 
-    _updateRemainingTime();
+    refreshRemainingTime();
     _ticker?.cancel();
 
     state = state.copyWith(status: FocusTimerStatus.paused, clearEndTime: true);
@@ -122,7 +127,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
 
       final newRemaining = currentRemaining + secondsToAdd;
 
-      final newEndTime = DateTime.now().add(Duration(seconds: newRemaining));
+      final newEndTime = _now().add(Duration(seconds: newRemaining));
 
       state = state.copyWith(
         initialSeconds: state.initialSeconds + secondsToAdd,
@@ -174,11 +179,13 @@ class FocusTimerController extends Notifier<FocusTimerState> {
 
     _ticker = Timer.periodic(
       const Duration(seconds: 1),
-      (_) => _updateRemainingTime(),
+      (_) => refreshRemainingTime(),
     );
   }
 
-  void _updateRemainingTime() {
+  /// Refreshes display state from the deterministic deadline.
+  /// Non-terminal ticks are deliberately local-only.
+  void refreshRemainingTime() {
     if (state.status != FocusTimerStatus.running) {
       return;
     }
@@ -196,7 +203,9 @@ class FocusTimerController extends Notifier<FocusTimerState> {
 
       _persist();
 
-      unawaited(ref.read(focusCompletionSoundProvider).play());
+      if (ref.read(settingsProvider).completionSoundEnabled) {
+        unawaited(ref.read(focusCompletionSoundProvider).play());
+      }
       return;
     }
 
@@ -210,7 +219,7 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       return state.remainingSeconds;
     }
 
-    final milliseconds = endTime.difference(DateTime.now()).inMilliseconds;
+    final milliseconds = endTime.difference(_now()).inMilliseconds;
 
     if (milliseconds <= 0) {
       return 0;
@@ -221,6 +230,37 @@ class FocusTimerController extends Notifier<FocusTimerState> {
     return (milliseconds / 1000).ceil();
   }
 
+  DateTime _now() => ref.read(focusClockProvider)();
+
+  Future<bool> replaceFromCloud(CloudFocusState cloud, int expectedRevision) {
+    final storage = ref.read(focusDayStorageProvider);
+    if (storage == null || storage.loadFocusRevision() != expectedRevision) {
+      return Future.value(false);
+    }
+    final expectedGeneration = _mutationGeneration;
+    final operation = _persistence.then((_) async {
+      if (_mutationGeneration != expectedGeneration ||
+          storage.loadFocusRevision() != expectedRevision) {
+        return false;
+      }
+      final downloaded = cloud.toLocal(_now());
+      await storage.saveTimer(downloaded);
+      if (_mutationGeneration != expectedGeneration ||
+          storage.loadFocusRevision() != expectedRevision) {
+        // A local mutation occurred while SharedPreferences was awaiting its
+        // write. Restore the newer in-memory snapshot before returning.
+        await storage.saveTimer(state);
+        return false;
+      }
+      _ticker?.cancel();
+      state = downloaded;
+      if (downloaded.status == FocusTimerStatus.running) _startTicker();
+      return true;
+    });
+    _persistence = operation.then<void>((_) {});
+    return operation;
+  }
+
   void _persist() {
     final storage = ref.read(focusDayStorageProvider);
 
@@ -228,6 +268,13 @@ class FocusTimerController extends Notifier<FocusTimerState> {
       return;
     }
 
-    storage.saveTimer(state);
+    final snapshot = state;
+    _mutationGeneration++;
+    _persistence = _persistence.then((_) async {
+      await storage.saveTimer(snapshot);
+      await storage.incrementFocusRevision();
+      ref.read(syncMutationBusProvider).notify(SyncDomain.focus);
+    });
+    unawaited(_persistence);
   }
 }
