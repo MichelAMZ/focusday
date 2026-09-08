@@ -14,6 +14,8 @@ import '../../auth/presentation/account_page.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/cloud/cloud_provider.dart';
+import '../../../core/cloud/focusday_sync_coordinator.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -28,6 +30,47 @@ class TodayPage extends ConsumerStatefulWidget {
 class _TodayPageState extends ConsumerState<TodayPage> {
   final Map<String, ProjectSchedulePhase> _previousSchedulePhases = {};
   bool _scheduleAlertPending = false;
+  ProviderSubscription<AsyncValue<dynamic>>? _authSyncSubscription;
+  SyncCoordinatorStatus _syncStatus = SyncCoordinatorStatus.idle;
+  String? _syncUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSyncSubscription = ref.listenManual(authStateChangesProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((user) async {
+        final coordinator = ref.read(focusDaySyncCoordinatorProvider);
+        if (user == null) {
+          _syncUserId = null;
+          coordinator?.reset();
+          if (mounted) {
+            setState(() => _syncStatus = SyncCoordinatorStatus.idle);
+          }
+          return;
+        }
+        if (coordinator == null) {
+          return;
+        }
+        _syncUserId = user.uid;
+        if (mounted) {
+          setState(() => _syncStatus = SyncCoordinatorStatus.synchronizing);
+        }
+        final result = await coordinator.synchronize(user.uid);
+        if (mounted && _syncUserId == user.uid) {
+          setState(() => _syncStatus = result);
+        }
+      });
+    }, fireImmediately: true);
+  }
+
+  @override
+  void dispose() {
+    _authSyncSubscription?.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +104,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_syncStatus != SyncCoordinatorStatus.idle)
+                _buildSyncStatus(context),
               Row(
                 children: [
                   Image.asset(
@@ -213,6 +258,61 @@ class _TodayPageState extends ConsumerState<TodayPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSyncStatus(BuildContext context) {
+    final (icon, message, needsAction) = switch (_syncStatus) {
+      SyncCoordinatorStatus.synchronizing => (
+        Icons.sync,
+        'Synchronisation des projets…',
+        false,
+      ),
+      SyncCoordinatorStatus.synchronized => (
+        Icons.cloud_done_outlined,
+        'Projets synchronisés.',
+        false,
+      ),
+      SyncCoordinatorStatus.conflict => (
+        Icons.sync_problem,
+        'Conflit local/cloud : choisissez une version depuis Compte & Cloud.',
+        true,
+      ),
+      SyncCoordinatorStatus.firstSyncRequired => (
+        Icons.cloud_sync_outlined,
+        'Première synchronisation : choisissez sauvegarder ou restaurer.',
+        true,
+      ),
+      SyncCoordinatorStatus.localChangedDuringSync => (
+        Icons.cloud_off_outlined,
+        'Une modification locale récente reste à synchroniser.',
+        false,
+      ),
+      SyncCoordinatorStatus.error => (
+        Icons.error_outline,
+        'Synchronisation momentanément indisponible.',
+        false,
+      ),
+      SyncCoordinatorStatus.idle => (Icons.sync, '', false),
+    };
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        dense: true,
+        leading: Icon(icon),
+        title: Text(message),
+        trailing: needsAction
+            ? TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const AccountPage(),
+                  ),
+                ),
+                child: const Text('Choisir'),
+              )
+            : null,
       ),
     );
   }

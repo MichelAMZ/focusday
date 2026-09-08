@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../features/projects/domain/focus_project.dart';
+import 'sync_cloud_gateway.dart';
 
-class FocusDayCloudStorage {
+class FocusDayCloudStorage implements SyncCloudGateway {
   FocusDayCloudStorage(this.firestore);
 
   final FirebaseFirestore firestore;
@@ -11,6 +12,43 @@ class FocusDayCloudStorage {
     return firestore.collection('users').doc(userId).collection('projects');
   }
 
+  DocumentReference<Map<String, dynamic>> _syncState(String userId) {
+    return firestore
+        .collection('users')
+        .doc(userId)
+        .collection('sync')
+        .doc('state');
+  }
+
+  Future<Map<String, dynamic>?> loadSyncState(String userId) async {
+    final snapshot = await _syncState(userId).get();
+    return snapshot.data();
+  }
+
+  @override
+  Future<DateTime?> loadLastSyncAt(String userId) async {
+    final state = await loadSyncState(userId);
+    final value = state?['lastSyncAt'];
+
+    if (value is Timestamp) {
+      return value.toDate().toUtc();
+    }
+
+    return null;
+  }
+
+  Future<void> saveSyncState({
+    required String userId,
+    required int projectCount,
+  }) async {
+    await _syncState(userId).set({
+      'schemaVersion': 1,
+      'projectCount': projectCount,
+      'lastSyncAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
   Future<List<FocusProject>> loadProjects(String userId) async {
     final snapshot = await _projects(userId).get();
 
@@ -19,6 +57,7 @@ class FocusDayCloudStorage {
         .toList();
   }
 
+  @override
   Future<void> saveProjects(String userId, List<FocusProject> projects) async {
     final collection = _projects(userId);
     final existing = await collection.get();
@@ -38,6 +77,12 @@ class FocusDayCloudStorage {
         batch.delete(document.reference);
       }
     }
+
+    batch.set(_syncState(userId), {
+      'schemaVersion': 1,
+      'projectCount': projects.length,
+      'lastSyncAt': FieldValue.serverTimestamp(),
+    });
 
     await batch.commit();
   }

@@ -15,6 +15,12 @@ class FocusDayStorage {
   static const _scheduledProjectAlertsEnabledKey =
       'focusday.settings.scheduledProjectAlertsEnabled';
   static const _languagePreferenceKey = 'focusday.settings.languagePreference';
+  static const _projectsUpdatedAtKey = 'focusday.sync.projectsUpdatedAt';
+  static const _lastSyncAtKey = 'focusday.sync.lastSyncAt';
+  static const _projectsDirtyKey = 'focusday.sync.projectsDirty';
+  static const _projectsRevisionKey = 'focusday.sync.projectsRevision';
+  static const _lastSyncedProjectsRevisionKey =
+      'focusday.sync.lastSyncedProjectsRevision';
 
   List<FocusProject>? loadProjects() {
     final raw = preferences.getString(_projectsKey);
@@ -105,5 +111,55 @@ class FocusDayStorage {
 
   Future<void> saveLanguagePreference(String preference) async {
     await preferences.setString(_languagePreferenceKey, preference);
+  }
+
+  DateTime? loadProjectsUpdatedAt() {
+    final raw = preferences.getString(_projectsUpdatedAtKey);
+    return raw == null ? null : DateTime.tryParse(raw)?.toUtc();
+  }
+
+  Future<void> saveProjectsUpdatedAt(DateTime value) async {
+    await preferences.setString(
+      _projectsUpdatedAtKey,
+      value.toUtc().toIso8601String(),
+    );
+  }
+
+  DateTime? loadLastSyncAt() {
+    final raw = preferences.getString(_lastSyncAtKey);
+    return raw == null ? null : DateTime.tryParse(raw)?.toUtc();
+  }
+
+  Future<void> saveLastSyncAt(DateTime value) async {
+    await preferences.setString(
+      _lastSyncAtKey,
+      value.toUtc().toIso8601String(),
+    );
+  }
+
+  bool loadProjectsDirty() {
+    return preferences.getBool(_projectsDirtyKey) ?? false;
+  }
+
+  Future<void> saveProjectsDirty(bool value) async {
+    await preferences.setBool(_projectsDirtyKey, value);
+  }
+
+  int loadProjectsRevision() {
+    return preferences.getInt(_projectsRevisionKey) ?? 0;
+  }
+
+  int loadLastSyncedProjectsRevision() {
+    return preferences.getInt(_lastSyncedProjectsRevisionKey) ?? 0;
+  }
+
+  Future<void> saveLastSyncedProjectsRevision(int value) async {
+    await preferences.setInt(_lastSyncedProjectsRevisionKey, value);
+  }
+
+  Future<int> incrementProjectsRevision() async {
+    final nextRevision = loadProjectsRevision() + 1;
+    await preferences.setInt(_projectsRevisionKey, nextRevision);
+    return nextRevision;
   }
 }

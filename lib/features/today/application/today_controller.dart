@@ -50,7 +50,7 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     FocusProject(id: 'akoffa', name: 'Akoffa', durationMinutes: 30, tasks: []),
   ];
 
-  void _persist() {
+  void _persist({bool markModified = true}) {
     final storage = ref.read(focusDayStorageProvider);
 
     if (storage == null) {
@@ -58,6 +58,12 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     }
 
     storage.saveProjects(state);
+
+    if (markModified) {
+      storage.saveProjectsUpdatedAt(DateTime.now().toUtc());
+      storage.saveProjectsDirty(true);
+      storage.incrementProjectsRevision();
+    }
   }
 
   void toggleTask(String projectId, String taskId) {
@@ -398,7 +404,25 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
 
   void replaceAllProjects(List<FocusProject> projects) {
     state = _sortProjectsByPriority(projects);
-    _persist();
+    _persist(markModified: false);
+  }
+
+  Future<bool> replaceAllProjectsFromCloud(
+    List<FocusProject> projects,
+    int expectedProjectsRevision,
+  ) async {
+    final storage = ref.read(focusDayStorageProvider);
+    if (storage == null) {
+      return false;
+    }
+
+    if (storage.loadProjectsRevision() != expectedProjectsRevision) {
+      return false;
+    }
+
+    state = _sortProjectsByPriority(projects);
+    await storage.saveProjects(state);
+    return storage.loadProjectsRevision() == expectedProjectsRevision;
   }
 
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {

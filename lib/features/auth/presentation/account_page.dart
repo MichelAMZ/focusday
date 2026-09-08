@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cloud/cloud_provider.dart';
+import '../../../core/storage/storage_provider.dart';
 import '../../today/application/today_controller.dart';
 import '../application/auth_controller.dart';
 
@@ -99,8 +100,24 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     try {
       final projects = ref.read(todayProjectsProvider);
       final cloudStorage = ref.read(focusDayCloudStorageProvider);
+      final localStorage = ref.read(focusDayStorageProvider);
+      final uploadedRevision = localStorage?.loadProjectsRevision() ?? 0;
 
       await cloudStorage.saveProjects(user.uid, projects);
+
+      final serverLastSyncAt = await cloudStorage.loadLastSyncAt(user.uid);
+      if (serverLastSyncAt == null) {
+        throw StateError(
+          'Horodatage de synchronisation Firestore indisponible.',
+        );
+      }
+
+      await localStorage?.saveLastSyncAt(serverLastSyncAt);
+      await localStorage?.saveLastSyncedProjectsRevision(uploadedRevision);
+      if (localStorage?.loadProjectsRevision() == uploadedRevision) {
+        await localStorage?.saveProjectsUpdatedAt(serverLastSyncAt);
+        await localStorage?.saveProjectsDirty(false);
+      }
 
       if (!mounted) {
         return;
@@ -137,6 +154,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
 
     try {
       final cloudStorage = ref.read(focusDayCloudStorageProvider);
+      final localStorage = ref.read(focusDayStorageProvider);
+      final expectedRevision = localStorage?.loadProjectsRevision() ?? 0;
       final cloudProjects = await cloudStorage.loadProjects(user.uid);
 
       if (!mounted) {
@@ -178,9 +197,36 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         return;
       }
 
-      ref
+      final applied = await ref
           .read(todayProjectsProvider.notifier)
-          .replaceAllProjects(cloudProjects);
+          .replaceAllProjectsFromCloud(cloudProjects, expectedRevision);
+      if (!applied) {
+        throw StateError(
+          'Les projets locaux ont changé pendant la restauration. '
+          'Aucune version plus récente n’a été marquée comme synchronisée.',
+        );
+      }
+
+      final serverLastSyncAt = await cloudStorage.loadLastSyncAt(user.uid);
+      if (serverLastSyncAt == null) {
+        throw StateError(
+          'Horodatage de synchronisation Firestore indisponible.',
+        );
+      }
+
+      await localStorage?.saveLastSyncAt(serverLastSyncAt);
+      await localStorage?.saveLastSyncedProjectsRevision(expectedRevision);
+      if (localStorage?.loadProjectsRevision() != expectedRevision) {
+        throw StateError(
+          'Les projets locaux ont changé pendant la restauration.',
+        );
+      }
+      await localStorage?.saveProjectsUpdatedAt(serverLastSyncAt);
+      await localStorage?.saveProjectsDirty(false);
+
+      if (!mounted) {
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
