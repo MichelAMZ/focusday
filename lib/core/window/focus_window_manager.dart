@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
+
+import '../platform/platform_support.dart';
 
 class FocusWindowManager {
   const FocusWindowManager._();
@@ -11,7 +11,7 @@ class FocusWindowManager {
   static const miniSize = Size(640, 82);
 
   static Future<void> initialize() async {
-    if (!Platform.isWindows) {
+    if (!isWindowsDesktop()) {
       return;
     }
 
@@ -33,7 +33,7 @@ class FocusWindowManager {
   }
 
   static Future<void> enterMiniMode() async {
-    if (!Platform.isWindows) {
+    if (!isWindowsDesktop()) {
       return;
     }
 
@@ -45,10 +45,7 @@ class FocusWindowManager {
     // First move the window safely onto the primary display so Windows can
     // update the Flutter window DPI before the final mini-bar positioning.
     await windowManager.setPosition(
-      Offset(
-        visiblePosition.dx + 20,
-        visiblePosition.dy + 20,
-      ),
+      Offset(visiblePosition.dx + 20, visiblePosition.dy + 20),
     );
 
     await Future<void>.delayed(const Duration(milliseconds: 150));
@@ -71,7 +68,7 @@ class FocusWindowManager {
   }
 
   static Future<void> restoreNormalMode() async {
-    if (!Platform.isWindows) {
+    if (!isWindowsDesktop()) {
       return;
     }
 
@@ -101,7 +98,7 @@ class FocusWindowManager {
   }
 
   static Future<void> closeApp() async {
-    if (!Platform.isWindows) {
+    if (!isWindowsDesktop()) {
       return;
     }
 

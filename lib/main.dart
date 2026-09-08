@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'core/platform/platform_support.dart';
 import 'core/startup/windows_startup_service.dart';
 import 'core/storage/focusday_storage.dart';
 import 'core/storage/storage_provider.dart';
@@ -17,10 +16,9 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  const startupService = WindowsStartupService();
-  await startupService.initialize();
-
-  if (Platform.isWindows) {
+  if (isWindowsDesktop()) {
+    const startupService = WindowsStartupService();
+    await startupService.initialize();
     await windowManager.ensureInitialized();
 
     const windowOptions = WindowOptions(
