@@ -2,9 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/ai_assistant_models.dart';
 import '../infrastructure/fake_ai_assistant_gateway.dart';
+import '../../today/application/focus_timer_controller.dart';
+import '../../today/application/today_controller.dart';
+import 'ai_action_executor.dart';
 import 'ai_assistant_gateway.dart';
 
 enum AiChatRole { user, assistant }
+
+enum AiProposalStatus { pending, applying, applied, rejected, expired }
 
 class AiChatMessage {
   const AiChatMessage({
@@ -23,11 +28,15 @@ class AiAssistantState {
     this.isSending = false,
     this.error,
     this.conversationId,
+    this.proposedActions = const [],
+    this.proposalStatus,
   });
   final List<AiChatMessage> messages;
   final bool isSending;
   final AiAssistantErrorCategory? error;
   final String? conversationId;
+  final List<AiProposedAction> proposedActions;
+  final AiProposalStatus? proposalStatus;
 
   AiAssistantState copyWith({
     List<AiChatMessage>? messages,
@@ -35,16 +44,29 @@ class AiAssistantState {
     AiAssistantErrorCategory? error,
     bool clearError = false,
     String? conversationId,
+    List<AiProposedAction>? proposedActions,
+    AiProposalStatus? proposalStatus,
+    bool clearProposalStatus = false,
   }) => AiAssistantState(
     messages: messages ?? this.messages,
     isSending: isSending ?? this.isSending,
     error: clearError ? null : error ?? this.error,
     conversationId: conversationId ?? this.conversationId,
+    proposedActions: proposedActions ?? this.proposedActions,
+    proposalStatus: clearProposalStatus
+        ? null
+        : proposalStatus ?? this.proposalStatus,
   );
 }
 
 final aiAssistantGatewayProvider = Provider<AiAssistantGateway>(
   (ref) => const FakeAiAssistantGateway(),
+);
+final aiActionExecutorProvider = Provider<AiActionExecutor>(
+  (ref) => AiActionExecutor(
+    projects: ref.read(todayProjectsProvider.notifier),
+    timer: ref.read(focusTimerProvider.notifier),
+  ),
 );
 final aiAssistantControllerProvider =
     NotifierProvider<AiAssistantController, AiAssistantState>(
@@ -98,6 +120,11 @@ class AiAssistantController extends Notifier<AiAssistantState> {
         isSending: false,
         clearError: true,
         conversationId: response.conversationId,
+        proposedActions: response.proposedActions,
+        proposalStatus: response.proposedActions.isEmpty
+            ? null
+            : AiProposalStatus.pending,
+        clearProposalStatus: response.proposedActions.isEmpty,
       );
     } on AiAssistantException catch (error) {
       state = state.copyWith(isSending: false, error: error.category);
@@ -107,6 +134,24 @@ class AiAssistantController extends Notifier<AiAssistantState> {
         error: AiAssistantErrorCategory.serverError,
       );
     }
+  }
+
+  void rejectProposals() {
+    if (state.proposalStatus != AiProposalStatus.pending) return;
+    state = state.copyWith(proposalStatus: AiProposalStatus.rejected);
+  }
+
+  void confirmProposals() {
+    if (state.proposalStatus != AiProposalStatus.pending) return;
+    state = state.copyWith(proposalStatus: AiProposalStatus.applying);
+    final applied = ref
+        .read(aiActionExecutorProvider)
+        .executeConfirmed(state.proposedActions);
+    state = state.copyWith(
+      proposalStatus: applied
+          ? AiProposalStatus.applied
+          : AiProposalStatus.expired,
+    );
   }
 
   Future<void> retry() async {

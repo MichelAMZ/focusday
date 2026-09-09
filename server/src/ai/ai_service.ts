@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import type { AiProvider } from "./ai_provider.js";
-import type { AiContext, AiProviderResponse } from "./ai_models.js";
+import type { AiContext, AiResponse } from "./ai_models.js";
+import { validateProviderResponse } from "./ai_response_validation.js";
 
 export class AiService {
   constructor(private readonly provider: AiProvider, private readonly safetySecret: string) {
@@ -11,10 +12,11 @@ export class AiService {
     return createHmac("sha256", this.safetySecret).update(uid).digest("hex");
   }
 
-  respond(uid: string, message: string, context: AiContext, conversationId?: string): Promise<AiProviderResponse> {
-    return this.provider.respond({
+  async respond(uid: string, message: string, context: AiContext, conversationId?: string): Promise<AiResponse> {
+    const response = await this.provider.respond({
       message, context, conversationId,
       safetyIdentifier: this.safetyIdentifier(uid),
     });
+    return validateProviderResponse(response);
   }
 }

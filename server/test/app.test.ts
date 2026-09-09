@@ -1,7 +1,12 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AiService } from "../src/ai/ai_service.js";
-import { AppError, type AiProviderRequest, type AiProviderResponse } from "../src/ai/ai_models.js";
+import {
+  AI_ACTION_LIMITS,
+  AppError,
+  type AiProviderRequest,
+  type AiProviderResponse,
+} from "../src/ai/ai_models.js";
 import type { AiProvider } from "../src/ai/ai_provider.js";
 import { createApp } from "../src/app.js";
 import type { FirebaseAuthVerifier } from "../src/auth/firebase_auth_verifier.js";
@@ -179,5 +184,86 @@ describe("FocusDay AI gateway", () => {
     const { app, provider } = fixture();
     await post(app);
     expect(provider.requests).toHaveLength(1);
+  });
+
+  it("accepts a provider response without proposed actions", async () => {
+    const { app } = fixture();
+    const response = await post(app);
+    expect(response.status).toBe(200);
+    expect(response.body).not.toHaveProperty("proposedActions");
+  });
+
+  it.each([
+    { type: "addTask", title: "Nouvelle tâche" },
+    { type: "addTask", title: "Nouvelle tâche", description: "Détails" },
+    { type: "renameTask", taskId: "task-1", newTitle: "Nouveau titre" },
+    { type: "completeTask", taskId: "task-1" },
+    { type: "reopenTask", taskId: "task-1" },
+    { type: "updateProjectNotes", newNotes: "Nouvelles notes" },
+    { type: "setFocusDuration", durationMinutes: 25 },
+  ])("transports valid proposed action $type", async (proposedAction) => {
+    const { app, provider } = fixture();
+    provider.response = { text: "Proposition", proposedActions: [proposedAction] };
+    const response = await post(app);
+    expect(response.status).toBe(200);
+    expect(response.body.proposedActions).toEqual([proposedAction]);
+  });
+
+  it("preserves a valid multi-action batch without executing it", async () => {
+    const { app, provider } = fixture();
+    const proposedActions = [
+      { type: "addTask", title: "Étape 1" },
+      { type: "addTask", title: "Étape 2", description: "Détails" },
+      { type: "setFocusDuration", durationMinutes: 25 },
+    ];
+    provider.response = {
+      text: "Je vous propose trois étapes.",
+      proposedActions,
+    };
+    const response = await post(app);
+    expect(response.status).toBe(200);
+    expect(response.body.proposedActions).toEqual(proposedActions);
+    expect(provider.requests).toHaveLength(1);
+  });
+
+  it.each([
+    [{ type: "unknown" }],
+    [{ type: "deleteTask", taskId: "task-1" }],
+    [{ type: "deleteProject", projectId: "project-1" }],
+    [{ type: "addTask", title: "Task", unexpected: true }],
+    [{ type: "addTask", title: "" }],
+    [{ type: "addTask", title: "x".repeat(AI_ACTION_LIMITS.maxTaskTitleLength + 1) }],
+    [{ type: "addTask", title: "Task", description: "x".repeat(AI_ACTION_LIMITS.maxTaskDescriptionLength + 1) }],
+    [{ type: "completeTask", taskId: "" }],
+    [{ type: "renameTask", taskId: "task-1", newTitle: "" }],
+    [{ type: "updateProjectNotes", newNotes: "x".repeat(AI_ACTION_LIMITS.maxProjectNotesLength + 1) }],
+    [{ type: "setFocusDuration", durationMinutes: 0 }],
+    [{ type: "setFocusDuration", durationMinutes: 481 }],
+    [{ type: "setFocusDuration", durationMinutes: 1.5 }],
+    [{ type: "setFocusDuration", durationMinutes: "25" }],
+    Array.from({ length: AI_ACTION_LIMITS.maxActions + 1 }, () => ({ type: "addTask", title: "Task" })),
+    [{ type: "addTask", title: "Task", uid: "firebase-uid" }],
+    [{ type: "addTask", title: "Task", email: "private@example.test" }],
+    [{ type: "addTask", title: "Task", apiKey: "secret" }],
+    [{ type: "addTask", title: "Task", payload: { uid: "firebase-uid" } }],
+  ])("rejects unsafe provider proposedActions %#", async (proposedActions) => {
+    const { app, provider } = fixture();
+    provider.response = { text: "Unsafe", proposedActions };
+    const response = await post(app);
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: { code: "server_error" } });
+    expect(JSON.stringify(response.body)).not.toContain("firebase-uid");
+    expect(JSON.stringify(response.body)).not.toContain("secret");
+  });
+
+  it("never includes verified Firebase identity in a valid response", async () => {
+    const { app, provider } = fixture();
+    provider.response = {
+      text: "Safe",
+      proposedActions: [{ type: "completeTask", taskId: "task-1" }],
+    };
+    const response = await post(app);
+    expect(response.status).toBe(200);
+    expect(JSON.stringify(response.body)).not.toContain("firebase-uid");
   });
 });

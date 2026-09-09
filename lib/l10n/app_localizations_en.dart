@@ -427,4 +427,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiErrorServer => 'Something went wrong. Try again.';
+
+  @override
+  String get aiProposalTitle => 'Proposal';
+
+  @override
+  String aiProposalProject(String projectName) {
+    return 'Project: $projectName';
+  }
+
+  @override
+  String get aiProposalAddTask => 'Add a task';
+
+  @override
+  String aiProposalAddTasks(int count) {
+    return 'Add $count tasks';
+  }
+
+  @override
+  String get aiProposalRenameTask => 'Rename a task';
+
+  @override
+  String get aiProposalCompleteTask => 'Mark as completed';
+
+  @override
+  String get aiProposalReopenTask => 'Reopen task';
+
+  @override
+  String get aiProposalUpdateNotes => 'Update notes';
+
+  @override
+  String get aiProposalFocusDuration => 'Change focus duration';
+
+  @override
+  String get aiProposalBefore => 'Before';
+
+  @override
+  String get aiProposalAfter => 'After';
+
+  @override
+  String get aiProposalReject => 'Reject';
+
+  @override
+  String get aiProposalConfirm => 'Confirm';
+
+  @override
+  String get aiProposalAdd => 'Add';
+
+  @override
+  String get aiProposalApplied => 'Proposal applied';
+
+  @override
+  String get aiProposalRejected => 'Proposal rejected';
+
+  @override
+  String get aiProposalExpired => 'This proposal is no longer applicable.';
+
+  @override
+  String get aiProposalInvalid => 'Invalid action';
+
+  @override
+  String get aiProposalMinutes => 'min';
 }

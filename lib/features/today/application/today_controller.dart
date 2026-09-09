@@ -16,6 +16,8 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
   Future<void> _persistence = Future.value();
   int _mutationGeneration = 0;
 
+  List<FocusProject> get currentProjects => state;
+
   @override
   List<FocusProject> build() {
     final storage = ref.watch(focusDayStorageProvider);
@@ -188,7 +190,11 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     _persist();
   }
 
-  void addTask({required String projectId, required String title}) {
+  void addTask({
+    required String projectId,
+    required String title,
+    String description = '',
+  }) {
     final trimmedTitle = title.trim();
 
     if (trimmedTitle.isEmpty) {
@@ -203,7 +209,11 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
           project.copyWith(
             tasks: _sortTasksByCompletion([
               ...project.tasks,
-              FocusTask(id: taskId, title: trimmedTitle),
+              FocusTask(
+                id: taskId,
+                title: trimmedTitle,
+                description: description.trim(),
+              ),
             ]),
           )
         else

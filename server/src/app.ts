@@ -37,6 +37,9 @@ export function createApp(deps: {
       response.status(200).json({
         text: result.text,
         ...(result.conversationId ? { conversationId: result.conversationId } : {}),
+        ...(result.proposedActions === undefined
+          ? {}
+          : { proposedActions: result.proposedActions }),
         metadata: { requestId },
       });
     } catch (error) {

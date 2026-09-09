@@ -191,8 +191,30 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: state.messages.length,
+                    itemCount:
+                        state.messages.length +
+                        (state.proposedActions.isEmpty ? 0 : 1),
                     itemBuilder: (context, index) {
+                      if (index == state.messages.length) {
+                        return _AiProposalCard(
+                          actions: state.proposedActions,
+                          status:
+                              state.proposalStatus ?? AiProposalStatus.expired,
+                          project: widget.projects
+                              .where(
+                                (project) =>
+                                    project.status == FocusProjectStatus.active,
+                              )
+                              .firstOrNull,
+                          timer: widget.timer,
+                          onConfirm: () => ref
+                              .read(aiAssistantControllerProvider.notifier)
+                              .confirmProposals(),
+                          onReject: () => ref
+                              .read(aiAssistantControllerProvider.notifier)
+                              .rejectProposals(),
+                        );
+                      }
                       final message = state.messages[index];
                       final user = message.role == AiChatRole.user;
                       return Semantics(
@@ -327,4 +349,199 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     AiAssistantErrorCategory.invalidRequest => l10n.aiErrorInvalidRequest,
     AiAssistantErrorCategory.serverError => l10n.aiErrorServer,
   };
+}
+
+class _AiProposalCard extends StatelessWidget {
+  const _AiProposalCard({
+    required this.actions,
+    required this.status,
+    required this.project,
+    required this.timer,
+    required this.onConfirm,
+    required this.onReject,
+  });
+
+  final List<AiProposedAction> actions;
+  final AiProposalStatus status;
+  final FocusProject? project;
+  final FocusTimerState timer;
+  final VoidCallback onConfirm;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final pending = status == AiProposalStatus.pending;
+    final applicable = project != null;
+    final addCount = actions
+        .where((action) => action.type == AiProposedActionType.addTask)
+        .length;
+    final confirmLabel = addCount == actions.length
+        ? l10n.aiProposalAdd
+        : l10n.aiProposalConfirm;
+
+    return Semantics(
+      container: true,
+      label: l10n.aiProposalTitle,
+      child: Card.outlined(
+        key: const Key('ai-proposal-card'),
+        margin: const EdgeInsets.only(top: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.auto_fix_high_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.aiProposalTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (status == AiProposalStatus.applying)
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                applicable
+                    ? l10n.aiProposalProject(project!.name)
+                    : l10n.aiAssistantContextNone,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              if (addCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    addCount == 1
+                        ? l10n.aiProposalAddTask
+                        : l10n.aiProposalAddTasks(addCount),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+              for (final action in actions) ...[
+                _actionContent(context, action),
+                const SizedBox(height: 8),
+              ],
+              if (status == AiProposalStatus.applied)
+                _status(
+                  context,
+                  Icons.check_circle_outline,
+                  l10n.aiProposalApplied,
+                ),
+              if (status == AiProposalStatus.rejected)
+                _status(context, Icons.block_outlined, l10n.aiProposalRejected),
+              if (status == AiProposalStatus.expired || !applicable)
+                _status(context, Icons.info_outline, l10n.aiProposalExpired),
+              if (pending && applicable) ...[
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton(
+                        key: const Key('ai-proposal-reject'),
+                        onPressed: onReject,
+                        child: Text(l10n.aiProposalReject),
+                      ),
+                      FilledButton(
+                        key: const Key('ai-proposal-confirm'),
+                        onPressed: onConfirm,
+                        child: Text(confirmLabel),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionContent(BuildContext context, AiProposedAction action) {
+    final l10n = AppLocalizations.of(context)!;
+    final task = action.taskId == null
+        ? null
+        : project?.tasks.where((task) => task.id == action.taskId).firstOrNull;
+    return switch (action.type) {
+      AiProposedActionType.addTask => _line(
+        context,
+        '• ${action.title}',
+        detail: action.description,
+      ),
+      AiProposedActionType.renameTask => _line(
+        context,
+        l10n.aiProposalRenameTask,
+        detail: '${task?.title ?? l10n.aiProposalInvalid} → ${action.newTitle}',
+      ),
+      AiProposedActionType.completeTask => _line(
+        context,
+        l10n.aiProposalCompleteTask,
+        detail: task?.title ?? l10n.aiProposalInvalid,
+      ),
+      AiProposedActionType.reopenTask => _line(
+        context,
+        l10n.aiProposalReopenTask,
+        detail: task?.title ?? l10n.aiProposalInvalid,
+      ),
+      AiProposedActionType.updateProjectNotes => _line(
+        context,
+        l10n.aiProposalUpdateNotes,
+        detail:
+            '${l10n.aiProposalBefore}: ${_preview(project?.notes ?? '')}\n'
+            '${l10n.aiProposalAfter}: ${_preview(action.newNotes ?? '')}',
+      ),
+      AiProposedActionType.setFocusDuration => _line(
+        context,
+        l10n.aiProposalFocusDuration,
+        detail:
+            '${project?.durationMinutes ?? timer.initialSeconds ~/ 60} '
+            '${l10n.aiProposalMinutes} → ${action.durationMinutes} '
+            '${l10n.aiProposalMinutes}',
+      ),
+    };
+  }
+
+  Widget _line(BuildContext context, String title, {String? detail}) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.bodyMedium),
+        if (detail != null && detail.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, left: 12),
+            child: Text(detail, style: Theme.of(context).textTheme.bodySmall),
+          ),
+      ],
+    ),
+  );
+
+  Widget _status(BuildContext context, IconData icon, String label) => Row(
+    children: [
+      Icon(icon, size: 18),
+      const SizedBox(width: 8),
+      Flexible(child: Text(label)),
+    ],
+  );
+
+  String _preview(String value) {
+    const maxLength = 140;
+    final compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return compact.length <= maxLength
+        ? compact
+        : '${compact.substring(0, maxLength - 1)}…';
+  }
 }

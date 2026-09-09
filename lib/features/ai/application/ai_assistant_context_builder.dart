@@ -33,6 +33,7 @@ class AiAssistantContextBuilder {
                   AiAssistantTaskContext(
                     title: task.title,
                     completed: task.isCompleted,
+                    localTaskId: task.id,
                   ),
               ],
               notes: activeProject.notes.trim().isEmpty

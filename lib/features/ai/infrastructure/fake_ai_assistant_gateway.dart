@@ -23,9 +23,45 @@ class FakeAiAssistantGateway implements AiAssistantGateway {
         : (french
               ? 'Commencez par la première tâche active et avancez pendant un court bloc de concentration.'
               : 'Start with the first active task and work on it for one short focus block.');
+    final firstActiveTask = request.context.activeProject?.tasks
+        .where((task) => !task.completed)
+        .firstOrNull;
+    final actions =
+        normalized.contains('découp') || normalized.contains('break')
+        ? const [
+            AiProposedAction(
+              type: AiProposedActionType.addTask,
+              title: 'Préparer le contenu',
+            ),
+            AiProposedAction(
+              type: AiProposedActionType.addTask,
+              title: 'Vérifier le résultat',
+            ),
+            AiProposedAction(
+              type: AiProposedActionType.addTask,
+              title: 'Valider la prochaine étape',
+            ),
+          ]
+        : (normalized.contains('marque') || normalized.contains('complete')) &&
+              firstActiveTask?.localTaskId != null
+        ? [
+            AiProposedAction(
+              type: AiProposedActionType.completeTask,
+              taskId: firstActiveTask!.localTaskId,
+            ),
+          ]
+        : normalized.contains('25')
+        ? const [
+            AiProposedAction(
+              type: AiProposedActionType.setFocusDuration,
+              durationMinutes: 25,
+            ),
+          ]
+        : const <AiProposedAction>[];
     return AiResponse(
       text: text,
       conversationId: request.conversationId ?? 'fake-conversation',
+      proposedActions: actions,
     );
   }
 }

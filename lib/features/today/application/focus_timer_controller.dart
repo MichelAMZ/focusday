@@ -21,6 +21,8 @@ class FocusTimerController extends Notifier<FocusTimerState> {
   Future<void> _persistence = Future.value();
   int _mutationGeneration = 0;
 
+  FocusTimerState get currentState => state;
+
   @override
   FocusTimerState build() {
     ref.onDispose(() {

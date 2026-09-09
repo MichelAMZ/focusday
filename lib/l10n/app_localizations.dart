@@ -889,6 +889,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong. Try again.'**
   String get aiErrorServer;
+
+  /// No description provided for @aiProposalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal'**
+  String get aiProposalTitle;
+
+  /// No description provided for @aiProposalProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: {projectName}'**
+  String aiProposalProject(String projectName);
+
+  /// No description provided for @aiProposalAddTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a task'**
+  String get aiProposalAddTask;
+
+  /// No description provided for @aiProposalAddTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} tasks'**
+  String aiProposalAddTasks(int count);
+
+  /// No description provided for @aiProposalRenameTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename a task'**
+  String get aiProposalRenameTask;
+
+  /// No description provided for @aiProposalCompleteTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as completed'**
+  String get aiProposalCompleteTask;
+
+  /// No description provided for @aiProposalReopenTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen task'**
+  String get aiProposalReopenTask;
+
+  /// No description provided for @aiProposalUpdateNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Update notes'**
+  String get aiProposalUpdateNotes;
+
+  /// No description provided for @aiProposalFocusDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Change focus duration'**
+  String get aiProposalFocusDuration;
+
+  /// No description provided for @aiProposalBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before'**
+  String get aiProposalBefore;
+
+  /// No description provided for @aiProposalAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get aiProposalAfter;
+
+  /// No description provided for @aiProposalReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get aiProposalReject;
+
+  /// No description provided for @aiProposalConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get aiProposalConfirm;
+
+  /// No description provided for @aiProposalAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get aiProposalAdd;
+
+  /// No description provided for @aiProposalApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal applied'**
+  String get aiProposalApplied;
+
+  /// No description provided for @aiProposalRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposal rejected'**
+  String get aiProposalRejected;
+
+  /// No description provided for @aiProposalExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This proposal is no longer applicable.'**
+  String get aiProposalExpired;
+
+  /// No description provided for @aiProposalInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid action'**
+  String get aiProposalInvalid;
+
+  /// No description provided for @aiProposalMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get aiProposalMinutes;
 }
 
 class _AppLocalizationsDelegate

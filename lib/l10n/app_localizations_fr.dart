@@ -433,4 +433,65 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get aiErrorServer => 'Une erreur est survenue. Réessayez.';
+
+  @override
+  String get aiProposalTitle => 'Proposition';
+
+  @override
+  String aiProposalProject(String projectName) {
+    return 'Projet : $projectName';
+  }
+
+  @override
+  String get aiProposalAddTask => 'Ajouter une tâche';
+
+  @override
+  String aiProposalAddTasks(int count) {
+    return 'Ajouter $count tâches';
+  }
+
+  @override
+  String get aiProposalRenameTask => 'Renommer une tâche';
+
+  @override
+  String get aiProposalCompleteTask => 'Marquer comme terminée';
+
+  @override
+  String get aiProposalReopenTask => 'Réouvrir la tâche';
+
+  @override
+  String get aiProposalUpdateNotes => 'Modifier les notes';
+
+  @override
+  String get aiProposalFocusDuration => 'Modifier la durée de focus';
+
+  @override
+  String get aiProposalBefore => 'Avant';
+
+  @override
+  String get aiProposalAfter => 'Après';
+
+  @override
+  String get aiProposalReject => 'Refuser';
+
+  @override
+  String get aiProposalConfirm => 'Confirmer';
+
+  @override
+  String get aiProposalAdd => 'Ajouter';
+
+  @override
+  String get aiProposalApplied => 'Proposition appliquée';
+
+  @override
+  String get aiProposalRejected => 'Proposition refusée';
+
+  @override
+  String get aiProposalExpired => 'Cette proposition n\'est plus applicable.';
+
+  @override
+  String get aiProposalInvalid => 'Action invalide';
+
+  @override
+  String get aiProposalMinutes => 'min';
 }
