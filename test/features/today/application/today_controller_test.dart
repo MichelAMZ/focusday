@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:focusday/core/cloud/sync_mutation_bus.dart';
+import 'package:focusday/core/storage/focusday_storage.dart';
+import 'package:focusday/core/storage/storage_provider.dart';
 import 'package:focusday/features/projects/domain/focus_project.dart';
 import 'package:focusday/features/today/application/today_controller.dart';
 
@@ -343,4 +347,35 @@ void main() {
       'Préparer la prochaine émission et vérifier le micro.',
     );
   });
+
+  test(
+    'rapid project mutations persist monotone revisions and notify sync',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = FocusDayStorage(await SharedPreferences.getInstance());
+      final container = ProviderContainer(
+        overrides: [focusDayStorageProvider.overrideWithValue(storage)],
+      );
+      addTearDown(container.dispose);
+      final notifications = container
+          .read(syncMutationBusProvider)
+          .changes
+          .take(3)
+          .toList();
+      final controller = container.read(todayProjectsProvider.notifier);
+
+      controller.updateProjectNotes(projectId: 'bogoka', notes: 'one');
+      controller.updateProjectNotes(projectId: 'bogoka', notes: 'two');
+      controller.updateProjectNotes(projectId: 'bogoka', notes: 'three');
+
+      expect(await notifications, [
+        SyncDomain.projects,
+        SyncDomain.projects,
+        SyncDomain.projects,
+      ]);
+      expect(storage.loadProjectsRevision(), 3);
+      expect(storage.loadProjectsDirty(), isTrue);
+      expect(storage.loadProjects()!.first.notes, 'three');
+    },
+  );
 }

@@ -15,9 +15,11 @@ import '../../auth/presentation/account_page.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../settings/presentation/settings_page.dart';
 import '../../../l10n/app_localizations.dart';
+
 import '../../../core/cloud/cloud_provider.dart';
 import '../../../core/cloud/focusday_sync_coordinator.dart';
 import '../../../core/cloud/sync_mutation_bus.dart';
+import '../../../core/cloud/settled_dialog.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -91,6 +93,16 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     final result = await coordinator.synchronize(userId);
     if (mounted && _syncUserId == userId) {
       setState(() => _syncStatus = result);
+    }
+  }
+
+  Future<void> _openAccountAndRefresh() async {
+    final resolved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (context) => const AccountPage()),
+    );
+    final userId = _syncUserId;
+    if (resolved == true && userId != null && mounted) {
+      await _synchronize(userId);
     }
   }
 
@@ -291,38 +303,50 @@ class _TodayPageState extends ConsumerState<TodayPage> {
 
   Widget _buildSyncStatus(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final (icon, message, needsAction) = switch (_syncStatus) {
+    final (icon, message, needsChoice, canRetry) = switch (_syncStatus) {
       SyncCoordinatorStatus.synchronizing => (
         Icons.sync,
         l10n.syncInProgress,
+        false,
         false,
       ),
       SyncCoordinatorStatus.synchronized => (
         Icons.cloud_done_outlined,
         l10n.syncComplete,
         false,
+        false,
       ),
       SyncCoordinatorStatus.conflict => (
         Icons.sync_problem,
         l10n.syncConflict,
         true,
+        false,
       ),
       SyncCoordinatorStatus.firstSyncRequired => (
         Icons.cloud_sync_outlined,
         l10n.syncFirstRequired,
         true,
+        false,
       ),
       SyncCoordinatorStatus.localChangedDuringSync => (
         Icons.cloud_off_outlined,
         l10n.syncPending,
         false,
+        true,
+      ),
+      SyncCoordinatorStatus.pendingOffline => (
+        Icons.cloud_off_outlined,
+        l10n.syncPendingOffline,
+        false,
+        true,
       ),
       SyncCoordinatorStatus.error => (
         Icons.error_outline,
         l10n.syncError,
         false,
+        true,
       ),
-      SyncCoordinatorStatus.idle => (Icons.sync, '', false),
+      SyncCoordinatorStatus.idle => (Icons.sync, '', false, false),
     };
 
     return Card(
@@ -331,14 +355,15 @@ class _TodayPageState extends ConsumerState<TodayPage> {
         dense: true,
         leading: Icon(icon),
         title: Text(message),
-        trailing: needsAction
+        trailing: needsChoice
             ? TextButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const AccountPage(),
-                  ),
-                ),
+                onPressed: _openAccountAndRefresh,
                 child: Text(l10n.syncChoose),
+              )
+            : canRetry && _syncUserId != null
+            ? TextButton(
+                onPressed: () => _synchronize(_syncUserId!),
+                child: Text(l10n.syncRetry),
               )
             : null,
       ),
@@ -386,7 +411,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
 
   Future<void> _showScheduleAlert(FocusProject project) async {
     final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
+    await showSettledDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -419,7 +444,7 @@ Future<void> _editProjectNotes(
   final notesController = TextEditingController(text: project.notes);
   final l10n = AppLocalizations.of(context)!;
 
-  final notes = await showDialog<String>(
+  final notes = await showSettledDialog<String>(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
@@ -613,7 +638,7 @@ class _ProjectsPanel extends StatelessWidget {
     final task2Controller = TextEditingController();
     final l10n = AppLocalizations.of(context)!;
 
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showSettledDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -742,7 +767,7 @@ class _ProjectsPanel extends StatelessWidget {
       text: project.durationMinutes.toString(),
     );
 
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showSettledDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -823,7 +848,7 @@ class _ProjectsPanel extends StatelessWidget {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showSettledDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -873,7 +898,7 @@ class _ProjectsPanel extends StatelessWidget {
       return true;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showSettledDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -1396,7 +1421,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
 
-    final title = await showDialog<String>(
+    final title = await showSettledDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -1460,7 +1485,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
     final titleController = TextEditingController(text: task.title);
     final descriptionController = TextEditingController(text: task.description);
 
-    final result = await showDialog<Map<String, String>>(
+    final result = await showSettledDialog<Map<String, String>>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(

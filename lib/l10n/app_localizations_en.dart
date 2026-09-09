@@ -27,13 +27,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completionSoundTitle => 'Focus completion sound';
 
   @override
-  String get completionSoundSubtitle => 'Plays a sound when the timer reaches 00:00.';
+  String get completionSoundSubtitle =>
+      'Plays a sound when the timer reaches 00:00.';
 
   @override
   String get scheduledAlertsTitle => 'Scheduled project alerts';
 
   @override
-  String get scheduledAlertsSubtitle => 'Shows an alert when a project reaches its scheduled start time.';
+  String get scheduledAlertsSubtitle =>
+      'Shows an alert when a project reaches its scheduled start time.';
 
   @override
   String get miniBarLabel => 'Mini-bar';
@@ -91,7 +93,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProjectTitle => 'Edit project';
 
   @override
-  String get activeProjectDeleteError => 'The active project cannot be deleted.';
+  String get activeProjectDeleteError =>
+      'The active project cannot be deleted.';
 
   @override
   String get deleteProjectTitle => 'Delete project?';
@@ -254,7 +257,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get windowsStartupTitle => 'Start FocusDay with Windows';
 
   @override
-  String get windowsStartupSubtitle => 'Automatically launch FocusDay when you sign in to Windows.';
+  String get windowsStartupSubtitle =>
+      'Automatically launch FocusDay when you sign in to Windows.';
 
   @override
   String get miniBarNoProject => 'No project';
@@ -272,19 +276,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncComplete => 'Synchronized.';
 
   @override
-  String get syncConflict => 'Local/cloud conflict: choose a version in Account & Cloud.';
+  String get syncConflict =>
+      'Local/cloud conflict: choose a version in Account & Cloud.';
 
   @override
-  String get syncFirstRequired => 'First synchronization: choose backup or restore.';
+  String get syncFirstRequired =>
+      'First synchronization: choose backup or restore.';
 
   @override
   String get syncPending => 'A recent local change is waiting to synchronize.';
+
+  @override
+  String get syncPendingOffline =>
+      'Waiting to synchronize. You may be offline.';
 
   @override
   String get syncError => 'Synchronization is temporarily unavailable.';
 
   @override
   String get syncChoose => 'Choose';
+
+  @override
+  String get syncRetry => 'Retry';
+
+  @override
+  String get syncResolveAction => 'Resolve synchronization conflicts';
+
+  @override
+  String syncResolveTitle(String domain) {
+    return 'Resolve $domain conflict';
+  }
+
+  @override
+  String get syncResolveMessage =>
+      'Choose which version should become the synchronized version.';
+
+  @override
+  String get syncKeepLocal => 'Keep my local data';
+
+  @override
+  String get syncUseCloud => 'Use cloud data';
+
+  @override
+  String get syncNoConflict => 'No synchronization conflict was found.';
+
+  @override
+  String get syncResolutionFailed =>
+      'Conflict resolution failed. No baseline was changed.';
+
+  @override
+  String get syncDomainProjects => 'projects';
+
+  @override
+  String get syncDomainSettings => 'settings';
+
+  @override
+  String get syncDomainFocus => 'timer';
 
   @override
   String get authOrSeparator => 'or';
@@ -302,13 +349,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleSignInFailed => 'Unable to sign in with Google.';
 
   @override
-  String get googleAccountCollision => 'An account already exists with another sign-in method.';
+  String get googleAccountCollision =>
+      'An account already exists with another sign-in method.';
 
   @override
-  String get googleNetworkError => 'Network unavailable. Check your connection and try again.';
+  String get googleNetworkError =>
+      'Network unavailable. Check your connection and try again.';
 
   @override
-  String get googlePopupBlocked => 'The Google sign-in window was blocked by the browser.';
+  String get googlePopupBlocked =>
+      'The Google sign-in window was blocked by the browser.';
 
   @override
   String get googleSignInUnavailable => 'Google sign-in is not available.';

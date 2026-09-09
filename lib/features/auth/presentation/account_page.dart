@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cloud/cloud_provider.dart';
+import '../../../core/cloud/conflict_resolution.dart';
+import '../../../core/cloud/focusday_sync_executor.dart';
+import '../../../core/cloud/settled_dialog.dart';
+import '../../../core/cloud/sync_mutation_bus.dart';
 import '../../../core/storage/storage_provider.dart';
 import '../../today/application/today_controller.dart';
 import '../application/auth_controller.dart';
@@ -141,22 +145,27 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       final localStorage = ref.read(focusDayStorageProvider);
       final uploadedRevision = localStorage?.loadProjectsRevision() ?? 0;
 
-      await cloudStorage.saveProjects(user.uid, projects);
+      final write = await cloudStorage.saveProjects(
+        user.uid,
+        projects,
+        expectedGeneration: localStorage?.loadProjectsGeneration(),
+        force: true,
+      );
 
-      final serverLastSyncAt = await cloudStorage.loadLastSyncAt(user.uid);
-      if (serverLastSyncAt == null) {
+      final baselineEstablished =
+          await localStorage?.establishProjectsSyncBaseline(
+            uid: user.uid,
+            synchronizedRevision: uploadedRevision,
+            serverLastSyncAt: write.updatedAt,
+            cloudGeneration: write.generation,
+          ) ??
+          false;
+      if (!baselineEstablished) {
         throw StateError(
-          'Horodatage de synchronisation Firestore indisponible.',
+          'Les projets locaux ont changé pendant la sauvegarde cloud.',
         );
       }
-
-      await localStorage?.saveLastSyncAt(serverLastSyncAt);
-      await localStorage?.prepareSyncOwner(user.uid);
-      await localStorage?.saveLastSyncedProjectsRevision(uploadedRevision);
-      if (localStorage?.loadProjectsRevision() == uploadedRevision) {
-        await localStorage?.saveProjectsUpdatedAt(serverLastSyncAt);
-        await localStorage?.saveProjectsDirty(false);
-      }
+      ref.read(syncMutationBusProvider).notify(SyncDomain.projects);
 
       if (!mounted) {
         return;
@@ -195,7 +204,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       final cloudStorage = ref.read(focusDayCloudStorageProvider);
       final localStorage = ref.read(focusDayStorageProvider);
       final expectedRevision = localStorage?.loadProjectsRevision() ?? 0;
-      final cloudProjects = await cloudStorage.loadProjects(user.uid);
+      final snapshot = await cloudStorage.loadProjectsSnapshot(user.uid);
+      final cloudProjects = snapshot.projects;
 
       if (!mounted) {
         return;
@@ -246,23 +256,20 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         );
       }
 
-      final serverLastSyncAt = await cloudStorage.loadLastSyncAt(user.uid);
-      if (serverLastSyncAt == null) {
-        throw StateError(
-          'Horodatage de synchronisation Firestore indisponible.',
-        );
-      }
-
-      await localStorage?.saveLastSyncAt(serverLastSyncAt);
-      await localStorage?.prepareSyncOwner(user.uid);
-      await localStorage?.saveLastSyncedProjectsRevision(expectedRevision);
-      if (localStorage?.loadProjectsRevision() != expectedRevision) {
+      final baselineEstablished =
+          await localStorage?.establishProjectsSyncBaseline(
+            uid: user.uid,
+            synchronizedRevision: expectedRevision,
+            serverLastSyncAt: snapshot.updatedAt,
+            cloudGeneration: snapshot.generation,
+          ) ??
+          false;
+      if (!baselineEstablished) {
         throw StateError(
           'Les projets locaux ont changé pendant la restauration.',
         );
       }
-      await localStorage?.saveProjectsUpdatedAt(serverLastSyncAt);
-      await localStorage?.saveProjectsDirty(false);
+      ref.read(syncMutationBusProvider).notify(SyncDomain.projects);
 
       if (!mounted) {
         return;
@@ -291,6 +298,83 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       }
     }
   }
+
+  Future<void> _resolveConflicts(User user) async {
+    final resolver = ref.read(syncConflictResolverProvider);
+    if (resolver == null || _isLoading) return;
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _isLoading = true);
+    try {
+      final conflicts = await resolver.detect(user.uid);
+      if (!mounted) return;
+      if (conflicts.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.syncNoConflict)));
+        return;
+      }
+      for (final domain in conflicts) {
+        if (!mounted) return;
+        final choice = await showSettledDialog<SyncResolutionChoice>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(l10n.syncResolveTitle(_domainLabel(domain, l10n))),
+            content: Text(l10n.syncResolveMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(l10n.cancelButton),
+              ),
+              OutlinedButton(
+                onPressed: () =>
+                    Navigator.pop(dialogContext, SyncResolutionChoice.useCloud),
+                child: Text(l10n.syncUseCloud),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(
+                  dialogContext,
+                  SyncResolutionChoice.keepLocal,
+                ),
+                child: Text(l10n.syncKeepLocal),
+              ),
+            ],
+          ),
+        );
+        final result = await applySyncResolutionChoice(
+          choice,
+          (selected) => resolver.resolve(user.uid, domain, selected),
+        );
+        if (result == null) return;
+        if (result != SyncExecutionResult.uploaded &&
+            result != SyncExecutionResult.downloaded) {
+          throw StateError('Conflict resolution did not complete: $result');
+        }
+      }
+      for (final domain in conflicts) {
+        ref.read(syncMutationBusProvider).notify(switch (domain) {
+          SyncConflictDomain.projects => SyncDomain.projects,
+          SyncConflictDomain.settings => SyncDomain.settings,
+          SyncConflictDomain.focus => SyncDomain.focus,
+        });
+      }
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.syncResolutionFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _domainLabel(SyncConflictDomain domain, AppLocalizations l10n) =>
+      switch (domain) {
+        SyncConflictDomain.projects => l10n.syncDomainProjects,
+        SyncConflictDomain.settings => l10n.syncDomainSettings,
+        SyncConflictDomain.focus => l10n.syncDomainFocus,
+      };
 
   Widget _buildSignedIn(User user) {
     final displayName = user.displayName?.trim();
@@ -329,6 +413,13 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                   'Vos projets restent enregistrés localement sur cet appareil.',
                 ),
                 const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  key: const Key('resolve-sync-conflicts-button'),
+                  onPressed: _isLoading ? null : () => _resolveConflicts(user),
+                  icon: const Icon(Icons.sync_problem),
+                  label: Text(AppLocalizations.of(context)!.syncResolveAction),
+                ),
+                const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _isLoading
                       ? null

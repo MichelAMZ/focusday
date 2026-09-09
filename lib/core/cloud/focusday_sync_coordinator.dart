@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+
 import 'focusday_sync_executor.dart';
 
 enum SyncCoordinatorStatus {
@@ -7,6 +9,7 @@ enum SyncCoordinatorStatus {
   conflict,
   firstSyncRequired,
   localChangedDuringSync,
+  pendingOffline,
   error,
 }
 
@@ -55,19 +58,36 @@ class FocusDaySyncCoordinator {
           SyncCoordinatorStatus.firstSyncRequired,
         SyncExecutionResult.localChangedDuringSync =>
           SyncCoordinatorStatus.localChangedDuringSync,
+        SyncExecutionResult.sessionChanged => SyncCoordinatorStatus.idle,
       };
       if (generation == _generation) {
         state = next;
       }
       return next;
     } catch (error) {
+      final errorStatus = isTransientCloudError(error)
+          ? SyncCoordinatorStatus.pendingOffline
+          : SyncCoordinatorStatus.error;
       if (generation == _generation) {
-        state = SyncCoordinatorStatus.error;
+        state = errorStatus;
         lastError = error;
       }
-      return SyncCoordinatorStatus.error;
+      return errorStatus;
     } finally {
       _activeSync = null;
     }
   }
+}
+
+bool isTransientCloudError(Object error) {
+  if (error is! FirebaseException) return false;
+
+  return const {
+    'aborted',
+    'cancelled',
+    'deadline-exceeded',
+    'network-request-failed',
+    'resource-exhausted',
+    'unavailable',
+  }.contains(error.code);
 }

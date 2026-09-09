@@ -68,7 +68,8 @@ class CloudFocusState {
 }
 
 class CloudValue<T> {
-  const CloudValue(this.value, this.updatedAt);
+  const CloudValue(this.value, this.updatedAt, {this.generation = 0});
   final T value;
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
+  final int generation;
 }

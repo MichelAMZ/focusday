@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum SyncDomain { settings, focus }
+enum SyncDomain { projects, settings, focus }
 
 class SyncMutationBus {
   final _controller = StreamController<SyncDomain>.broadcast();

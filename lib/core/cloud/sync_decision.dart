@@ -1,10 +1,4 @@
-enum SyncDecision {
-  noAction,
-  upload,
-  download,
-  conflict,
-  firstSync,
-}
+enum SyncDecision { noAction, upload, download, conflict, firstSync }
 
 SyncDecision decideSync({
   required bool localChanged,
@@ -16,8 +10,7 @@ SyncDecision decideSync({
   }
 
   final cloudChanged =
-      cloudLastSyncAt != null &&
-      cloudLastSyncAt.isAfter(localLastSyncAt);
+      cloudLastSyncAt != null && cloudLastSyncAt.isAfter(localLastSyncAt);
 
   if (localChanged && cloudChanged) {
     return SyncDecision.conflict;

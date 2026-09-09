@@ -27,13 +27,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get completionSoundTitle => 'Son de fin de focus';
 
   @override
-  String get completionSoundSubtitle => 'Joue un son lorsque le minuteur atteint 00:00.';
+  String get completionSoundSubtitle =>
+      'Joue un son lorsque le minuteur atteint 00:00.';
 
   @override
   String get scheduledAlertsTitle => 'Alertes des projets planifiés';
 
   @override
-  String get scheduledAlertsSubtitle => 'Affiche une alerte lorsqu’un projet atteint son heure de démarrage.';
+  String get scheduledAlertsSubtitle =>
+      'Affiche une alerte lorsqu’un projet atteint son heure de démarrage.';
 
   @override
   String get miniBarLabel => 'Mini-bar';
@@ -58,7 +60,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get notesHint => 'Idées, remarques, décisions, liens, points à vérifier...';
+  String get notesHint =>
+      'Idées, remarques, décisions, liens, points à vérifier...';
 
   @override
   String get cancelButton => 'Annuler';
@@ -91,7 +94,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editProjectTitle => 'Modifier le projet';
 
   @override
-  String get activeProjectDeleteError => 'Impossible de supprimer le projet actif.';
+  String get activeProjectDeleteError =>
+      'Impossible de supprimer le projet actif.';
 
   @override
   String get deleteProjectTitle => 'Supprimer le projet ?';
@@ -254,7 +258,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get windowsStartupTitle => 'Démarrer FocusDay avec Windows';
 
   @override
-  String get windowsStartupSubtitle => 'Lancer automatiquement FocusDay à l’ouverture de votre session Windows.';
+  String get windowsStartupSubtitle =>
+      'Lancer automatiquement FocusDay à l’ouverture de votre session Windows.';
 
   @override
   String get miniBarNoProject => 'Aucun projet';
@@ -272,19 +277,63 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncComplete => 'Synchronisé.';
 
   @override
-  String get syncConflict => 'Conflit local/cloud : choisissez une version dans Compte & Cloud.';
+  String get syncConflict =>
+      'Conflit local/cloud : choisissez une version dans Compte & Cloud.';
 
   @override
-  String get syncFirstRequired => 'Première synchronisation : choisissez sauvegarder ou restaurer.';
+  String get syncFirstRequired =>
+      'Première synchronisation : choisissez sauvegarder ou restaurer.';
 
   @override
-  String get syncPending => 'Une modification locale récente reste à synchroniser.';
+  String get syncPending =>
+      'Une modification locale récente reste à synchroniser.';
+
+  @override
+  String get syncPendingOffline =>
+      'Synchronisation en attente. Vous êtes peut-être hors ligne.';
 
   @override
   String get syncError => 'Synchronisation momentanément indisponible.';
 
   @override
   String get syncChoose => 'Choisir';
+
+  @override
+  String get syncRetry => 'Réessayer';
+
+  @override
+  String get syncResolveAction => 'Résoudre les conflits de synchronisation';
+
+  @override
+  String syncResolveTitle(String domain) {
+    return 'Résoudre le conflit $domain';
+  }
+
+  @override
+  String get syncResolveMessage =>
+      'Choisissez la version qui doit devenir la version synchronisée.';
+
+  @override
+  String get syncKeepLocal => 'Garder mes données locales';
+
+  @override
+  String get syncUseCloud => 'Utiliser les données du cloud';
+
+  @override
+  String get syncNoConflict => 'Aucun conflit de synchronisation détecté.';
+
+  @override
+  String get syncResolutionFailed =>
+      'La résolution a échoué. Aucune baseline n’a été modifiée.';
+
+  @override
+  String get syncDomainProjects => 'projets';
+
+  @override
+  String get syncDomainSettings => 'réglages';
+
+  @override
+  String get syncDomainFocus => 'minuteur';
 
   @override
   String get authOrSeparator => 'ou';
@@ -302,17 +351,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get googleSignInFailed => 'Impossible de se connecter avec Google.';
 
   @override
-  String get googleAccountCollision => 'Un compte existe déjà avec une autre méthode de connexion.';
+  String get googleAccountCollision =>
+      'Un compte existe déjà avec une autre méthode de connexion.';
 
   @override
-  String get googleNetworkError => 'Réseau indisponible. Vérifiez votre connexion et réessayez.';
+  String get googleNetworkError =>
+      'Réseau indisponible. Vérifiez votre connexion et réessayez.';
 
   @override
-  String get googlePopupBlocked => 'La fenêtre de connexion Google a été bloquée par le navigateur.';
+  String get googlePopupBlocked =>
+      'La fenêtre de connexion Google a été bloquée par le navigateur.';
 
   @override
-  String get googleSignInUnavailable => 'La connexion Google n’est pas disponible.';
+  String get googleSignInUnavailable =>
+      'La connexion Google n’est pas disponible.';
 
   @override
-  String get googleTooManyRequests => 'Trop de tentatives. Réessayez plus tard.';
+  String get googleTooManyRequests =>
+      'Trop de tentatives. Réessayez plus tard.';
 }

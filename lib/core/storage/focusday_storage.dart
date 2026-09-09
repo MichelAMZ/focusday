@@ -30,6 +30,9 @@ class FocusDayStorage {
       'focusday.sync.lastSyncedFocusRevision';
   static const _focusLastSyncAtKey = 'focusday.sync.focusLastSyncAt';
   static const _syncOwnerUidKey = 'focusday.sync.ownerUid';
+  static const _projectsGenerationKey = 'focusday.sync.projectsGeneration';
+  static const _settingsGenerationKey = 'focusday.sync.settingsGeneration';
+  static const _focusGenerationKey = 'focusday.sync.focusGeneration';
 
   List<FocusProject>? loadProjects() {
     final raw = preferences.getString(_projectsKey);
@@ -203,12 +206,57 @@ class FocusDayStorage {
   /// any local user data. Domain baselines from another account are discarded.
   Future<void> prepareSyncOwner(String uid) async {
     if (loadSyncOwnerUid() == uid) return;
+    await preferences.remove(_projectsUpdatedAtKey);
+    await preferences.remove(_lastSyncAtKey);
     await preferences.remove(_settingsLastSyncAtKey);
     await preferences.remove(_focusLastSyncAtKey);
+    await preferences.remove(_projectsGenerationKey);
+    await preferences.remove(_settingsGenerationKey);
+    await preferences.remove(_focusGenerationKey);
+    await saveLastSyncedProjectsRevision(loadProjectsRevision());
     await saveLastSyncedSettingsRevision(loadSettingsRevision());
     await saveLastSyncedFocusRevision(loadFocusRevision());
     await saveSyncOwnerUid(uid);
   }
+
+  Future<bool> establishProjectsSyncBaseline({
+    required String uid,
+    required int synchronizedRevision,
+    DateTime? serverLastSyncAt,
+    int? cloudGeneration,
+  }) async {
+    if (serverLastSyncAt == null && cloudGeneration == null) return false;
+    if (loadProjectsRevision() != synchronizedRevision) return false;
+
+    await prepareSyncOwner(uid);
+    if (loadProjectsRevision() != synchronizedRevision) return false;
+
+    if (serverLastSyncAt != null) {
+      await saveLastSyncAt(serverLastSyncAt);
+    }
+    await saveLastSyncedProjectsRevision(synchronizedRevision);
+    if (cloudGeneration != null) {
+      await saveProjectsGeneration(cloudGeneration);
+    }
+    if (loadProjectsRevision() != synchronizedRevision) return false;
+
+    if (serverLastSyncAt != null) {
+      await saveProjectsUpdatedAt(serverLastSyncAt);
+    }
+    await saveProjectsDirty(false);
+    return loadSyncOwnerUid() == uid &&
+        loadProjectsRevision() == synchronizedRevision;
+  }
+
+  int? loadProjectsGeneration() => preferences.getInt(_projectsGenerationKey);
+  int? loadSettingsGeneration() => preferences.getInt(_settingsGenerationKey);
+  int? loadFocusGeneration() => preferences.getInt(_focusGenerationKey);
+  Future<void> saveProjectsGeneration(int value) =>
+      preferences.setInt(_projectsGenerationKey, value);
+  Future<void> saveSettingsGeneration(int value) =>
+      preferences.setInt(_settingsGenerationKey, value);
+  Future<void> saveFocusGeneration(int value) =>
+      preferences.setInt(_focusGenerationKey, value);
 
   DateTime? _loadUtcDateTime(String key) {
     final raw = preferences.getString(key);

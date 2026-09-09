@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focusday/core/cloud/focusday_sync_coordinator.dart';
 import 'package:focusday/core/cloud/focusday_sync_executor.dart';
@@ -57,6 +58,21 @@ void main() {
       expect(coordinator.lastError, isA<StateError>());
     },
   );
+
+  test('transient Firestore error is classified as pending offline', () async {
+    final coordinator = FocusDaySyncCoordinator(
+      (_) async => throw FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'unavailable',
+      ),
+    );
+
+    expect(
+      await coordinator.synchronize('user'),
+      SyncCoordinatorStatus.pendingOffline,
+    );
+    expect(coordinator.state, SyncCoordinatorStatus.pendingOffline);
+  });
 
   test(
     'logout reset prevents an old completion from changing visible state',

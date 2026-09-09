@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:focusday/core/cloud/focusday_sync_executor.dart';
 import 'package:focusday/core/cloud/focusday_sync_inspector.dart';
 import 'package:focusday/core/cloud/sync_cloud_gateway.dart';
+import 'package:focusday/core/cloud/sync_decision.dart';
 import 'package:focusday/core/storage/focusday_storage.dart';
 import 'package:focusday/features/projects/domain/focus_project.dart';
 
@@ -14,6 +15,9 @@ class FakeSyncCloudGateway implements SyncCloudGateway {
     this.lastSyncAtAfterSave,
     this.onLoadProjects,
     this.onSaveProjects,
+    this.onBeforeSaveProjects,
+    this.generation = 0,
+    this.returnNullUpdatedAt = false,
   });
 
   DateTime? lastSyncAt;
@@ -21,6 +25,9 @@ class FakeSyncCloudGateway implements SyncCloudGateway {
   List<FocusProject> projects;
   Future<void> Function()? onLoadProjects;
   Future<void> Function()? onSaveProjects;
+  Future<void> Function()? onBeforeSaveProjects;
+  int generation;
+  bool returnNullUpdatedAt;
 
   int loadProjectsCalls = 0;
   int saveProjectsCalls = 0;
@@ -40,14 +47,42 @@ class FakeSyncCloudGateway implements SyncCloudGateway {
   }
 
   @override
-  Future<void> saveProjects(String userId, List<FocusProject> projects) async {
+  Future<int> loadProjectsGeneration(String userId) async => generation;
+
+  @override
+  Future<CloudProjectsSnapshot> loadProjectsSnapshot(String userId) async {
+    loadProjectsCalls++;
+    await onLoadProjects?.call();
+    return CloudProjectsSnapshot(
+      projects: List<FocusProject>.from(projects),
+      generation: generation,
+      updatedAt: lastSyncAt,
+    );
+  }
+
+  @override
+  Future<CloudWriteResult> saveProjects(
+    String userId,
+    List<FocusProject> projects, {
+    required int? expectedGeneration,
+    bool force = false,
+  }) async {
     saveProjectsCalls++;
-    this.projects = List<FocusProject>.from(projects);
+    await onBeforeSaveProjects?.call();
+    if (!force && expectedGeneration != generation) {
+      throw const CloudWriteConflict();
+    }
     await onSaveProjects?.call();
+    this.projects = List<FocusProject>.from(projects);
+    generation++;
 
     if (lastSyncAtAfterSave != null) {
       lastSyncAt = lastSyncAtAfterSave;
     }
+    return CloudWriteResult(
+      generation: generation,
+      updatedAt: returnNullUpdatedAt ? null : lastSyncAt ?? DateTime.utc(2026),
+    );
   }
 }
 
@@ -67,6 +102,7 @@ void main() {
     required FocusDayStorage localStorage,
     required FakeSyncCloudGateway cloudStorage,
     DownloadedProjectsApplier? applyDownloadedProjects,
+    SyncSessionGuard? isSessionCurrent,
   }) {
     final inspector = FocusDaySyncInspector(
       cloudStorage: cloudStorage,
@@ -77,6 +113,7 @@ void main() {
       inspector: inspector,
       cloudStorage: cloudStorage,
       localStorage: localStorage,
+      isSessionCurrent: isSessionCurrent ?? (_) => true,
       applyDownloadedProjects:
           applyDownloadedProjects ??
           (projects, expectedRevision) async {
@@ -106,6 +143,25 @@ void main() {
     expect(cloudStorage.loadProjectsCalls, 0);
     expect(localStorage.loadProjectsDirty(), false);
     expect(localStorage.loadLastSyncedProjectsRevision(), 0);
+  });
+
+  test('unauthenticated session performs no cloud operation', () async {
+    final localStorage = await createStorage();
+    await localStorage.saveProjectsDirty(true);
+    final cloudStorage = FakeSyncCloudGateway(lastSyncAt: DateTime.utc(2026));
+    final executor = createExecutor(
+      localStorage: localStorage,
+      cloudStorage: cloudStorage,
+      isSessionCurrent: (_) => false,
+    );
+
+    expect(
+      await executor.execute('signed-out-user'),
+      SyncExecutionResult.sessionChanged,
+    );
+    expect(cloudStorage.loadLastSyncAtCalls, 0);
+    expect(cloudStorage.saveProjectsCalls, 0);
+    expect(cloudStorage.loadProjectsCalls, 0);
   });
 
   test('firstSync performs no cloud write', () async {
@@ -403,4 +459,275 @@ void main() {
     expect(localStorage.loadLastSyncedProjectsRevision(), 0);
     expect(localStorage.loadProjectsDirty(), true);
   });
+
+  test('logout during upload never advances the local baseline', () async {
+    final localStorage = await createStorage();
+    final baseline = DateTime.utc(2026, 9, 8, 10);
+    await localStorage.saveLastSyncAt(baseline);
+    await localStorage.incrementProjectsRevision();
+    await localStorage.saveProjectsDirty(true);
+    var signedIn = true;
+    final cloudStorage = FakeSyncCloudGateway(
+      lastSyncAt: baseline,
+      lastSyncAtAfterSave: baseline.add(const Duration(minutes: 1)),
+      onSaveProjects: () async => signedIn = false,
+    );
+    final executor = createExecutor(
+      localStorage: localStorage,
+      cloudStorage: cloudStorage,
+      isSessionCurrent: (_) => signedIn,
+    );
+
+    expect(
+      await executor.execute('user-1'),
+      SyncExecutionResult.sessionChanged,
+    );
+    expect(localStorage.loadLastSyncAt(), baseline);
+    expect(localStorage.loadLastSyncedProjectsRevision(), 0);
+    expect(localStorage.loadProjectsDirty(), isTrue);
+  });
+
+  test('explicit empty local upload replaces the cloud snapshot', () async {
+    final localStorage = await createStorage();
+    final baseline = DateTime.utc(2026, 9, 8, 10);
+    await localStorage.saveProjects(const []);
+    await localStorage.saveLastSyncAt(baseline);
+    await localStorage.incrementProjectsRevision();
+    await localStorage.saveProjectsDirty(true);
+    final cloudStorage = FakeSyncCloudGateway(
+      lastSyncAt: baseline,
+      lastSyncAtAfterSave: baseline.add(const Duration(minutes: 1)),
+      projects: const [
+        FocusProject(
+          id: 'old-cloud-project',
+          name: 'Old',
+          durationMinutes: 30,
+          tasks: [],
+        ),
+      ],
+    );
+
+    expect(
+      await createExecutor(
+        localStorage: localStorage,
+        cloudStorage: cloudStorage,
+      ).execute('user-1'),
+      SyncExecutionResult.uploaded,
+    );
+    expect(cloudStorage.projects, isEmpty);
+    expect(localStorage.loadProjectsDirty(), isFalse);
+  });
+
+  test(
+    'project conflict resolved with local updates cloud and baseline',
+    () async {
+      final storage = await createStorage();
+      final baseline = DateTime.utc(2026, 9, 8, 10);
+      final serverTime = baseline.add(const Duration(minutes: 20));
+      await storage.saveProjects(const [
+        FocusProject(
+          id: 'local',
+          name: 'Local',
+          durationMinutes: 30,
+          tasks: [],
+        ),
+      ]);
+      await storage.saveLastSyncAt(baseline);
+      await storage.incrementProjectsRevision();
+      await storage.saveProjectsDirty(true);
+      final cloud = FakeSyncCloudGateway(
+        lastSyncAt: baseline.add(const Duration(minutes: 10)),
+        lastSyncAtAfterSave: serverTime,
+      );
+      final executor = createExecutor(
+        localStorage: storage,
+        cloudStorage: cloud,
+      );
+
+      expect(await executor.execute('u'), SyncExecutionResult.conflict);
+      expect(
+        await executor.resolve('u', SyncResolutionChoice.keepLocal),
+        SyncExecutionResult.uploaded,
+      );
+      expect(cloud.projects.single.id, 'local');
+      expect(storage.loadLastSyncAt(), serverTime);
+      expect(storage.loadLastSyncedProjectsRevision(), 1);
+      expect(storage.loadProjectsGeneration(), cloud.generation);
+      expect(storage.loadProjectsRevision(), 1);
+      expect(storage.loadProjectsDirty(), isFalse);
+      expect(await cloud.loadProjectsGeneration('u'), cloud.generation);
+      expect(await executor.inspector.inspect('u'), SyncDecision.noAction);
+      expect(await executor.execute('u'), SyncExecutionResult.noAction);
+    },
+  );
+
+  test(
+    'generation establishes first upload when server timestamp is unresolved',
+    () async {
+      final storage = await createStorage();
+      await storage.saveProjects(const [
+        FocusProject(
+          id: 'local',
+          name: 'Local',
+          durationMinutes: 30,
+          tasks: [],
+        ),
+      ]);
+      await storage.incrementProjectsRevision();
+      await storage.saveProjectsDirty(true);
+      final cloud = FakeSyncCloudGateway(
+        lastSyncAt: null,
+        returnNullUpdatedAt: true,
+      );
+      final executor = createExecutor(
+        localStorage: storage,
+        cloudStorage: cloud,
+      );
+
+      expect(
+        await executor.resolve('u', SyncResolutionChoice.keepLocal),
+        SyncExecutionResult.uploaded,
+      );
+      expect(storage.loadProjectsGeneration(), 1);
+      expect(storage.loadProjectsRevision(), 1);
+      expect(storage.loadLastSyncedProjectsRevision(), 1);
+      expect(storage.loadProjectsDirty(), isFalse);
+      expect(storage.loadLastSyncAt(), isNull);
+      expect(await executor.inspector.inspect('u'), SyncDecision.noAction);
+    },
+  );
+
+  test('project conflict resolved with cloud replaces local', () async {
+    final storage = await createStorage();
+    final baseline = DateTime.utc(2026, 9, 8, 10);
+    final cloudTime = baseline.add(const Duration(minutes: 10));
+    await storage.saveProjects(const [
+      FocusProject(id: 'local', name: 'Local', durationMinutes: 30, tasks: []),
+    ]);
+    await storage.saveLastSyncAt(baseline);
+    await storage.incrementProjectsRevision();
+    await storage.saveProjectsDirty(true);
+    final cloud = FakeSyncCloudGateway(
+      lastSyncAt: cloudTime,
+      projects: const [
+        FocusProject(
+          id: 'cloud',
+          name: 'Cloud',
+          durationMinutes: 45,
+          tasks: [],
+        ),
+      ],
+    );
+    final executor = createExecutor(localStorage: storage, cloudStorage: cloud);
+
+    expect(
+      await executor.resolve('u', SyncResolutionChoice.useCloud),
+      SyncExecutionResult.downloaded,
+    );
+    expect(storage.loadProjects()!.single.id, 'cloud');
+    expect(storage.loadProjectsDirty(), isFalse);
+    expect(storage.loadLastSyncAt(), cloudTime);
+    expect(storage.loadProjectsGeneration(), cloud.generation);
+  });
+
+  test('network failure resolving project keeps conflict metadata', () async {
+    final storage = await createStorage();
+    final baseline = DateTime.utc(2026, 9, 8, 10);
+    await storage.saveLastSyncAt(baseline);
+    await storage.incrementProjectsRevision();
+    await storage.saveProjectsDirty(true);
+    final cloud = FakeSyncCloudGateway(
+      lastSyncAt: baseline.add(const Duration(minutes: 1)),
+      onSaveProjects: () async => throw StateError('offline'),
+    );
+    final executor = createExecutor(localStorage: storage, cloudStorage: cloud);
+
+    await expectLater(
+      executor.resolve('u', SyncResolutionChoice.keepLocal),
+      throwsStateError,
+    );
+    expect(storage.loadLastSyncAt(), baseline);
+    expect(storage.loadLastSyncedProjectsRevision(), 0);
+    expect(storage.loadProjectsDirty(), isTrue);
+  });
+
+  test('failed first-sync restore establishes no baseline', () async {
+    final storage = await createStorage();
+    await storage.saveProjectsDirty(true);
+    final cloud = FakeSyncCloudGateway(
+      lastSyncAt: DateTime.utc(2026, 9, 9),
+      onLoadProjects: () async => throw StateError('offline'),
+    );
+    final executor = createExecutor(localStorage: storage, cloudStorage: cloud);
+
+    expect(await executor.execute('u'), SyncExecutionResult.firstSync);
+    await expectLater(
+      executor.resolve('u', SyncResolutionChoice.useCloud),
+      throwsStateError,
+    );
+    expect(storage.loadLastSyncAt(), isNull);
+    expect(storage.loadLastSyncedProjectsRevision(), 0);
+    expect(storage.loadProjectsDirty(), isTrue);
+  });
+
+  test(
+    'stale upload is rejected when cloud generation changes before write',
+    () async {
+      final storage = await createStorage();
+      final baseline = DateTime.utc(2026, 9, 8, 10);
+
+      const localProjects = [
+        FocusProject(
+          id: 'shared',
+          name: 'Version locale',
+          durationMinutes: 30,
+          tasks: [],
+        ),
+      ];
+
+      const concurrentProjects = [
+        FocusProject(
+          id: 'shared',
+          name: 'Version concurrente',
+          durationMinutes: 45,
+          tasks: [],
+        ),
+      ];
+
+      await storage.saveProjects(localProjects);
+      await storage.saveLastSyncAt(baseline);
+      await storage.saveProjectsGeneration(0);
+      await storage.incrementProjectsRevision();
+      await storage.saveProjectsDirty(true);
+
+      late final FakeSyncCloudGateway cloud;
+      var concurrentWriteInjected = false;
+
+      cloud = FakeSyncCloudGateway(
+        lastSyncAt: baseline,
+        generation: 0,
+        onBeforeSaveProjects: () async {
+          if (concurrentWriteInjected) return;
+          concurrentWriteInjected = true;
+          cloud.projects = List<FocusProject>.from(concurrentProjects);
+          cloud.generation = 1;
+          cloud.lastSyncAt = baseline.add(const Duration(minutes: 1));
+        },
+      );
+
+      final executor = createExecutor(
+        localStorage: storage,
+        cloudStorage: cloud,
+      );
+
+      final result = await executor.execute('u');
+
+      expect(result, SyncExecutionResult.conflict);
+      expect(cloud.generation, 1);
+      expect(cloud.projects.single.name, 'Version concurrente');
+      expect(storage.loadProjectsDirty(), isTrue);
+      expect(storage.loadProjectsGeneration(), 0);
+      expect(storage.loadLastSyncedProjectsRevision(), 0);
+    },
+  );
 }

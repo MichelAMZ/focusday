@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/cloud/sync_mutation_bus.dart';
 import '../../../core/storage/storage_provider.dart';
 import '../../projects/domain/focus_project.dart';
 import '../../projects/domain/focus_task.dart';
@@ -10,6 +13,9 @@ final todayProjectsProvider =
     );
 
 class TodayProjectsController extends Notifier<List<FocusProject>> {
+  Future<void> _persistence = Future.value();
+  int _mutationGeneration = 0;
+
   @override
   List<FocusProject> build() {
     final storage = ref.watch(focusDayStorageProvider);
@@ -57,13 +63,19 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
       return;
     }
 
-    storage.saveProjects(state);
+    final snapshot = state;
+    if (markModified) _mutationGeneration++;
+    _persistence = _persistence.then((_) async {
+      await storage.saveProjects(snapshot);
 
-    if (markModified) {
-      storage.saveProjectsUpdatedAt(DateTime.now().toUtc());
-      storage.saveProjectsDirty(true);
-      storage.incrementProjectsRevision();
-    }
+      if (markModified) {
+        await storage.saveProjectsUpdatedAt(DateTime.now().toUtc());
+        await storage.saveProjectsDirty(true);
+        await storage.incrementProjectsRevision();
+        ref.read(syncMutationBusProvider).notify(SyncDomain.projects);
+      }
+    });
+    unawaited(_persistence);
   }
 
   void toggleTask(String projectId, String taskId) {
@@ -416,13 +428,21 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
       return false;
     }
 
-    if (storage.loadProjectsRevision() != expectedProjectsRevision) {
-      return false;
-    }
+    final expectedGeneration = _mutationGeneration;
+    final downloaded = _sortProjectsByPriority(projects);
+    final operation = _persistence.then((_) async {
+      if (_mutationGeneration != expectedGeneration ||
+          storage.loadProjectsRevision() != expectedProjectsRevision) {
+        return false;
+      }
 
-    state = _sortProjectsByPriority(projects);
-    await storage.saveProjects(state);
-    return storage.loadProjectsRevision() == expectedProjectsRevision;
+      state = downloaded;
+      await storage.saveProjects(downloaded);
+      return _mutationGeneration == expectedGeneration &&
+          storage.loadProjectsRevision() == expectedProjectsRevision;
+    });
+    _persistence = operation.then<void>((_) {});
+    return operation;
   }
 
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
