@@ -369,4 +369,68 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get googleTooManyRequests =>
       'Trop de tentatives. Réessayez plus tard.';
+
+  @override
+  String get aiAssistantTitle => 'Assistant FocusDay';
+
+  @override
+  String get aiAssistantTooltip => 'Ouvrir l’assistant';
+
+  @override
+  String get aiAssistantEmptyTitle => 'Que voulez-vous faire maintenant ?';
+
+  @override
+  String get aiAssistantContext => 'Contexte : projet actif';
+
+  @override
+  String aiAssistantContextProject(String projectName) {
+    return 'Contexte : $projectName';
+  }
+
+  @override
+  String get aiAssistantContextNone => 'Contexte : aucun projet actif';
+
+  @override
+  String get aiSuggestionNext => 'Quelle est ma prochaine action ?';
+
+  @override
+  String get aiSuggestionBreakDown => 'Aide-moi à découper la tâche actuelle';
+
+  @override
+  String get aiSuggestionPrioritize => 'Que dois-je prioriser ?';
+
+  @override
+  String get aiSuggestionSummary => 'Résume mon projet actif';
+
+  @override
+  String get aiInputHint => 'Demandez un conseil…';
+
+  @override
+  String get aiSend => 'Envoyer';
+
+  @override
+  String get aiSending => 'Réflexion en cours…';
+
+  @override
+  String get aiRetry => 'Réessayer';
+
+  @override
+  String get aiErrorUnauthenticated =>
+      'Connectez-vous pour utiliser l’assistant.';
+
+  @override
+  String get aiErrorUnavailable =>
+      'L’assistant est momentanément indisponible.';
+
+  @override
+  String get aiErrorTimeout => 'La réponse prend trop de temps. Réessayez.';
+
+  @override
+  String get aiErrorRateLimited => 'Trop de demandes. Réessayez plus tard.';
+
+  @override
+  String get aiErrorInvalidRequest => 'Cette demande ne peut pas être envoyée.';
+
+  @override
+  String get aiErrorServer => 'Une erreur est survenue. Réessayez.';
 }

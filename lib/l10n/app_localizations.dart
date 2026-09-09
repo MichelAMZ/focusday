@@ -769,6 +769,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Too many attempts. Try again later.'**
   String get googleTooManyRequests;
+
+  /// No description provided for @aiAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FocusDay Assistant'**
+  String get aiAssistantTitle;
+
+  /// No description provided for @aiAssistantTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open assistant'**
+  String get aiAssistantTooltip;
+
+  /// No description provided for @aiAssistantEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to do now?'**
+  String get aiAssistantEmptyTitle;
+
+  /// No description provided for @aiAssistantContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context: active project'**
+  String get aiAssistantContext;
+
+  /// No description provided for @aiAssistantContextProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Context: {projectName}'**
+  String aiAssistantContextProject(String projectName);
+
+  /// No description provided for @aiAssistantContextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Context: no active project'**
+  String get aiAssistantContextNone;
+
+  /// No description provided for @aiSuggestionNext.
+  ///
+  /// In en, this message translates to:
+  /// **'What is my next action?'**
+  String get aiSuggestionNext;
+
+  /// No description provided for @aiSuggestionBreakDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Help me break down the current task'**
+  String get aiSuggestionBreakDown;
+
+  /// No description provided for @aiSuggestionPrioritize.
+  ///
+  /// In en, this message translates to:
+  /// **'What should I prioritize?'**
+  String get aiSuggestionPrioritize;
+
+  /// No description provided for @aiSuggestionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize my active project'**
+  String get aiSuggestionSummary;
+
+  /// No description provided for @aiInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for advice…'**
+  String get aiInputHint;
+
+  /// No description provided for @aiSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get aiSend;
+
+  /// No description provided for @aiSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get aiSending;
+
+  /// No description provided for @aiRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get aiRetry;
+
+  /// No description provided for @aiErrorUnauthenticated.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use the assistant.'**
+  String get aiErrorUnauthenticated;
+
+  /// No description provided for @aiErrorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is temporarily unavailable.'**
+  String get aiErrorUnavailable;
+
+  /// No description provided for @aiErrorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The response is taking too long. Try again.'**
+  String get aiErrorTimeout;
+
+  /// No description provided for @aiErrorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests. Try again later.'**
+  String get aiErrorRateLimited;
+
+  /// No description provided for @aiErrorInvalidRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'This request cannot be sent.'**
+  String get aiErrorInvalidRequest;
+
+  /// No description provided for @aiErrorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again.'**
+  String get aiErrorServer;
 }
 
 class _AppLocalizationsDelegate

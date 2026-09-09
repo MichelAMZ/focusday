@@ -20,6 +20,7 @@ import '../../../core/cloud/cloud_provider.dart';
 import '../../../core/cloud/focusday_sync_coordinator.dart';
 import '../../../core/cloud/sync_mutation_bus.dart';
 import '../../../core/cloud/settled_dialog.dart';
+import '../../ai/presentation/ai_assistant_panel.dart';
 
 import '../application/project_schedule_controller.dart';
 import '../application/project_schedule_state.dart';
@@ -110,6 +111,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final projects = ref.watch(todayProjectsProvider);
+    final timer = ref.watch(focusTimerProvider);
     final scheduleState = ref.watch(projectScheduleProvider);
 
     final settings = ref.watch(settingsProvider);
@@ -224,6 +226,22 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                       child: Icon(Icons.person_outline, size: 20),
                     ),
                   ),
+                  if (MediaQuery.sizeOf(context).width < 1400)
+                    IconButton(
+                      key: const Key('open-ai-assistant-button'),
+                      tooltip: l10n.aiAssistantTooltip,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => AiAssistantPage(
+                              projects: projects,
+                              timer: timer,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.auto_awesome_outlined),
+                    ),
                   IconButton(
                     tooltip: l10n.settingsTooltip,
                     onPressed: () {
@@ -243,8 +261,11 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth >= 900;
+                    final showAssistantPanel = constraints.maxWidth >= 1350;
                     final showNotesPanel =
-                        constraints.maxWidth >= 1050 &&
+                        ((showAssistantPanel && constraints.maxWidth >= 1800) ||
+                            (!showAssistantPanel &&
+                                constraints.maxWidth >= 1050)) &&
                         activeProject.notes.trim().isNotEmpty;
                     if (!isWide) {
                       return SingleChildScrollView(
@@ -287,6 +308,16 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                           Expanded(
                             flex: 2,
                             child: _ProjectNotesPanel(project: activeProject),
+                          ),
+                        ],
+                        if (showAssistantPanel) ...[
+                          const SizedBox(width: 24),
+                          SizedBox(
+                            width: 360,
+                            child: AiAssistantPanel(
+                              projects: projects,
+                              timer: timer,
+                            ),
                           ),
                         ],
                       ],

@@ -365,4 +365,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get googleTooManyRequests => 'Too many attempts. Try again later.';
+
+  @override
+  String get aiAssistantTitle => 'FocusDay Assistant';
+
+  @override
+  String get aiAssistantTooltip => 'Open assistant';
+
+  @override
+  String get aiAssistantEmptyTitle => 'What would you like to do now?';
+
+  @override
+  String get aiAssistantContext => 'Context: active project';
+
+  @override
+  String aiAssistantContextProject(String projectName) {
+    return 'Context: $projectName';
+  }
+
+  @override
+  String get aiAssistantContextNone => 'Context: no active project';
+
+  @override
+  String get aiSuggestionNext => 'What is my next action?';
+
+  @override
+  String get aiSuggestionBreakDown => 'Help me break down the current task';
+
+  @override
+  String get aiSuggestionPrioritize => 'What should I prioritize?';
+
+  @override
+  String get aiSuggestionSummary => 'Summarize my active project';
+
+  @override
+  String get aiInputHint => 'Ask for advice…';
+
+  @override
+  String get aiSend => 'Send';
+
+  @override
+  String get aiSending => 'Thinking…';
+
+  @override
+  String get aiRetry => 'Retry';
+
+  @override
+  String get aiErrorUnauthenticated => 'Sign in to use the assistant.';
+
+  @override
+  String get aiErrorUnavailable => 'The assistant is temporarily unavailable.';
+
+  @override
+  String get aiErrorTimeout => 'The response is taking too long. Try again.';
+
+  @override
+  String get aiErrorRateLimited => 'Too many requests. Try again later.';
+
+  @override
+  String get aiErrorInvalidRequest => 'This request cannot be sent.';
+
+  @override
+  String get aiErrorServer => 'Something went wrong. Try again.';
 }
