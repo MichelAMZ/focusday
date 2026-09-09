@@ -22,7 +22,7 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     final savedProjects = storage?.loadProjects();
 
     if (savedProjects != null && savedProjects.isNotEmpty) {
-      return savedProjects;
+      return _sortProjectsByPriority(savedProjects);
     }
 
     return _defaultProjects;
@@ -82,15 +82,7 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
     state = [
       for (final project in state)
         if (project.id == projectId)
-          project.copyWith(
-            tasks: [
-              for (final task in project.tasks)
-                if (task.id == taskId)
-                  task.copyWith(isCompleted: !task.isCompleted)
-                else
-                  task,
-            ],
-          )
+          project.copyWith(tasks: _toggleAndReorderTask(project.tasks, taskId))
         else
           project,
     ];
@@ -209,10 +201,10 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
       for (final project in state)
         if (project.id == projectId)
           project.copyWith(
-            tasks: [
+            tasks: _sortTasksByCompletion([
               ...project.tasks,
               FocusTask(id: taskId, title: trimmedTitle),
-            ],
+            ]),
           )
         else
           project,
@@ -446,22 +438,51 @@ class TodayProjectsController extends Notifier<List<FocusProject>> {
   }
 
   List<FocusProject> _sortProjectsByPriority(List<FocusProject> projects) {
-    final active = projects.where(
+    final normalized = [
+      for (final project in projects)
+        project.copyWith(tasks: _sortTasksByCompletion(project.tasks)),
+    ];
+
+    final active = normalized.where(
       (project) => project.status == FocusProjectStatus.active,
     );
 
-    final paused = projects.where(
+    final paused = normalized.where(
       (project) => project.status == FocusProjectStatus.paused,
     );
 
-    final waiting = projects.where(
+    final waiting = normalized.where(
       (project) => project.status == FocusProjectStatus.waiting,
     );
 
-    final completed = projects.where(
+    final completed = normalized.where(
       (project) => project.status == FocusProjectStatus.completed,
     );
 
     return [...active, ...paused, ...waiting, ...completed];
+  }
+
+  List<FocusTask> _sortTasksByCompletion(List<FocusTask> tasks) => [
+    ...tasks.where((task) => !task.isCompleted),
+    ...tasks.where((task) => task.isCompleted),
+  ];
+
+  List<FocusTask> _toggleAndReorderTask(List<FocusTask> tasks, String taskId) {
+    final ordered = _sortTasksByCompletion(tasks);
+    final index = ordered.indexWhere((task) => task.id == taskId);
+    if (index == -1) return ordered;
+
+    final original = ordered.removeAt(index);
+    final toggled = original.copyWith(isCompleted: !original.isCompleted);
+    if (toggled.isCompleted) {
+      ordered.add(toggled);
+    } else {
+      final firstCompleted = ordered.indexWhere((task) => task.isCompleted);
+      ordered.insert(
+        firstCompleted == -1 ? ordered.length : firstCompleted,
+        toggled,
+      );
+    }
+    return ordered;
   }
 }
