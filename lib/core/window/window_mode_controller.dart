@@ -16,8 +16,11 @@ class FocusWindowModeController extends Notifier<FocusWindowMode> {
   }
 
   Future<void> enterMiniMode() async {
-    await FocusWindowManager.enterMiniMode();
     state = FocusWindowMode.mini;
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    await FocusWindowManager.enterMiniMode();
   }
 
   Future<void> restoreNormalMode() async {

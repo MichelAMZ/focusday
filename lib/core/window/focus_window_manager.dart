@@ -8,7 +8,17 @@ class FocusWindowManager {
   const FocusWindowManager._();
 
   static const normalSize = Size(1200, 760);
-  static const miniSize = Size(640, 82);
+  static const double miniHeight = 82;
+  static const double miniPreferredWidth = 640;
+  static const double miniHorizontalMargin = 20;
+  static const double miniMinimumWidth = 420;
+
+  static Size _miniSizeForVisibleArea(Size visibleSize) {
+    final availableWidth = (visibleSize.width - (miniHorizontalMargin * 2))
+        .clamp(miniMinimumWidth, miniPreferredWidth);
+
+    return Size(availableWidth.toDouble(), miniHeight);
+  }
 
   static Future<void> initialize() async {
     if (!isWindowsDesktop()) {
@@ -50,6 +60,8 @@ class FocusWindowManager {
 
     await Future<void>.delayed(const Duration(milliseconds: 150));
 
+    final miniSize = _miniSizeForVisibleArea(visibleSize);
+
     await windowManager.setMinimumSize(miniSize);
     await windowManager.setMaximumSize(miniSize);
     await windowManager.setSize(miniSize);
@@ -58,7 +70,10 @@ class FocusWindowManager {
     await windowManager.setSkipTaskbar(false);
 
     final position = Offset(
-      visiblePosition.dx + visibleSize.width - miniSize.width - 20,
+      visiblePosition.dx +
+          visibleSize.width -
+          miniSize.width -
+          miniHorizontalMargin,
       visiblePosition.dy + visibleSize.height - miniSize.height,
     );
 
