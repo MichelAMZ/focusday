@@ -1039,11 +1039,11 @@ class _ProjectCard extends ConsumerWidget {
     final schedulePhase = scheduleState.phaseFor(project.scheduledAt);
 
     return Opacity(
-      opacity: active ? 1 : 0.38,
+      opacity: active ? 1 : 0.62,
       child: Card(
         elevation: active ? 3 : 0,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Icon(
