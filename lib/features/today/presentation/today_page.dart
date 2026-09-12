@@ -136,7 +136,9 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < 900 ? 16 : 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -268,19 +270,28 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                                 constraints.maxWidth >= 1050)) &&
                         activeProject.notes.trim().isNotEmpty;
                     if (!isWide) {
+                      final compactProjectsHeight = constraints.maxHeight < 620
+                          ? 300.0
+                          : 360.0;
+                      final compactNotesHeight = constraints.maxHeight < 620
+                          ? 220.0
+                          : 280.0;
+
                       return SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 16),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             SizedBox(
-                              height: 420,
+                              height: compactProjectsHeight,
                               child: _ProjectsPanel(projects: projects),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                             _ActiveProjectPanel(project: activeProject),
                             if (activeProject.notes.trim().isNotEmpty) ...[
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
                               SizedBox(
-                                height: 320,
+                                height: compactNotesHeight,
                                 child: _ProjectNotesPanel(
                                   project: activeProject,
                                 ),

@@ -19,7 +19,7 @@ class FocusWindowManager {
 
     const options = WindowOptions(
       size: normalSize,
-      minimumSize: Size(900, 600),
+      minimumSize: Size(720, 520),
       title: 'FocusDay',
     );
 
@@ -74,7 +74,7 @@ class FocusWindowManager {
 
     await windowManager.setAlwaysOnTop(false);
     await windowManager.setMaximumSize(const Size(10000, 10000));
-    await windowManager.setMinimumSize(const Size(900, 600));
+    await windowManager.setMinimumSize(const Size(720, 520));
     await windowManager.setSize(normalSize);
 
     final position = await _centeredPositionOnPrimaryDisplay(normalSize);
