@@ -1,4 +1,4 @@
-name: focusday
+﻿name: focusday
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -112,6 +112,6 @@ msix_config:
   display_name: FocusDay
   publisher_display_name: FocusDay
   identity_name: FocusDay
-  msix_version: 1.0.0.0
+  msix_version: 1.0.1.0
   logo_path: windows/runner/resources/app_icon.ico
   capabilities: internetClient
