@@ -1608,7 +1608,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
   }) {
     if (!isCurrentTimer) {
       return [
-        FilledButton.icon(
+        FilledButton.tonalIcon(
           onPressed: () {
             controller.reset(
               projectId: project.id,
@@ -1633,7 +1633,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
 
       case FocusTimerStatus.running:
         return [
-          FilledButton.tonalIcon(
+          FilledButton.icon(
             onPressed: controller.pause,
             icon: const Icon(Icons.pause),
             label: Text(l10n.pauseButton),
@@ -1643,7 +1643,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
             icon: const Icon(Icons.add),
             label: const Text('+15 min'),
           ),
-          FilledButton.icon(
+          FilledButton.tonalIcon(
             onPressed: () {
               controller.complete();
 
@@ -1686,7 +1686,7 @@ class _ActiveProjectPanel extends ConsumerWidget {
             icon: const Icon(Icons.add),
             label: const Text('+15 min'),
           ),
-          FilledButton.icon(
+          FilledButton.tonalIcon(
             onPressed: () {
               controller.complete();
 
