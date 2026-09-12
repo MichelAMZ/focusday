@@ -28,6 +28,7 @@ class AiAssistantContextBuilder {
           ? null
           : AiAssistantProjectContext(
               name: activeProject.name,
+              localProjectId: activeProject.id,
               tasks: [
                 for (final task in activeProject.tasks)
                   AiAssistantTaskContext(

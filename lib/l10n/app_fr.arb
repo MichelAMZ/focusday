@@ -125,7 +125,13 @@
   "syncRetry": "Réessayer",
   "syncResolveAction": "Résoudre les conflits de synchronisation",
   "syncResolveTitle": "Résoudre le conflit {domain}",
-  "@syncResolveTitle": {"placeholders": {"domain": {"type": "String"}}},
+  "@syncResolveTitle": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "syncResolveMessage": "Choisissez la version qui doit devenir la version synchronisée.",
   "syncKeepLocal": "Garder mes données locales",
   "syncUseCloud": "Utiliser les données du cloud",
@@ -149,7 +155,13 @@
   "aiAssistantEmptyTitle": "Que voulez-vous faire maintenant ?",
   "aiAssistantContext": "Contexte : projet actif",
   "aiAssistantContextProject": "Contexte : {projectName}",
-  "@aiAssistantContextProject": {"placeholders": {"projectName": {"type": "String"}}},
+  "@aiAssistantContextProject": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
   "aiAssistantContextNone": "Contexte : aucun projet actif",
   "aiSuggestionNext": "Quelle est ma prochaine action ?",
   "aiSuggestionBreakDown": "Aide-moi à découper la tâche actuelle",
@@ -167,10 +179,22 @@
   "aiErrorServer": "Une erreur est survenue. Réessayez.",
   "aiProposalTitle": "Proposition",
   "aiProposalProject": "Projet : {projectName}",
-  "@aiProposalProject": {"placeholders": {"projectName": {"type": "String"}}},
+  "@aiProposalProject": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
   "aiProposalAddTask": "Ajouter une tâche",
   "aiProposalAddTasks": "Ajouter {count} tâches",
-  "@aiProposalAddTasks": {"placeholders": {"count": {"type": "int"}}},
+  "@aiProposalAddTasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "aiProposalRenameTask": "Renommer une tâche",
   "aiProposalCompleteTask": "Marquer comme terminée",
   "aiProposalReopenTask": "Réouvrir la tâche",
@@ -185,5 +209,31 @@
   "aiProposalRejected": "Proposition refusée",
   "aiProposalExpired": "Cette proposition n'est plus applicable.",
   "aiProposalInvalid": "Action invalide",
-  "aiProposalMinutes": "min"
+  "aiProposalMinutes": "min",
+  "aiProviderTitle": "Assistant IA",
+  "aiProviderDisabled": "Désactivé",
+  "aiDisabledState": "Assistant IA désactivé",
+  "aiProviderChatgpt": "ChatGPT",
+  "aiProviderPersonal": "Ma clé OpenAI API",
+  "aiKeyLabel": "Clé OpenAI API personnelle",
+  "aiKeyConfigure": "Configurer",
+  "aiKeyDelete": "Supprimer la clé",
+  "aiKeyConfigured": "Configurée",
+  "aiKeyMissing": "Non configurée",
+  "aiKeySessionOnly": "La clé reste uniquement en mémoire pour cette session et ce compte. Elle est effacée au changement de mode ou de compte et à la fermeture. La consommation API vous est facturée séparément de ChatGPT.",
+  "aiKeyConfigureFailed": "Connectez-vous à votre compte FocusDay et vérifiez la clé saisie.",
+  "aiOpenSettings": "Ouvrir les paramètres",
+  "aiCopyChatgpt": "Copier pour ChatGPT",
+  "aiCopiedChatgpt": "Contexte copié",
+  "aiChatgptHelp": "Vérifiez le contexte avant de le copier dans ChatGPT. Aucun appel API ni aucune action automatique.",
+  "aiPersonalQuota": "Quota API, facturation ou limite de débit : vérifiez votre compte OpenAI.",
+  "aiPersonalAccess": "Clé OpenAI refusée ou accès au modèle indisponible. Vérifiez votre configuration.",
+  "aiBackendConfiguration": "L’adresse du backend IA est absente ou invalide. Relancez FocusDay avec une configuration backend valide.",
+  "aiProposalStartTimer": "Démarrer le timer",
+  "aiProposalPauseTimer": "Mettre le timer en pause",
+  "aiProposalFailed": "Échec de l’exécution. Vérifiez les données avant de demander une nouvelle proposition.",
+  "aiHistoryLocal": "Historique local : 100 derniers messages. Les anciennes actions ne sont pas restaurées.",
+  "aiHistoryClear": "Effacer l’historique",
+  "aiHistoryClearConfirm": "Effacer les messages de cet appareil et annuler les propositions en attente ?",
+  "aiHistoryError": "Historique local illisible ou non enregistré. Vérifiez le stockage de cet appareil."
 }

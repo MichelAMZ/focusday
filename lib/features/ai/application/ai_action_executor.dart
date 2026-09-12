@@ -50,16 +50,22 @@ class AiActionExecutor {
             projectId: currentProject.id,
             notes: action.newNotes!,
           );
+        case AiProposedActionType.startTimer:
+          timer.start();
+        case AiProposedActionType.pauseTimer:
+          timer.pause();
         case AiProposedActionType.setFocusDuration:
           projects.updateProject(
             projectId: currentProject.id,
             name: currentProject.name,
             durationMinutes: action.durationMinutes!,
           );
-          timer.reset(
-            projectId: currentProject.id,
-            durationMinutes: action.durationMinutes!,
-          );
+          if (currentTimer.projectId == currentProject.id) {
+            timer.reset(
+              projectId: currentProject.id,
+              durationMinutes: action.durationMinutes!,
+            );
+          }
       }
     }
     return true;

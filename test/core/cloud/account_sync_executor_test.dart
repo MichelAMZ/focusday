@@ -112,6 +112,19 @@ void main() {
     expect(gateway.settings!.value.completionSoundEnabled, isFalse);
   });
 
+  test(
+    'AI provider stays local and does not trigger settings upload',
+    () async {
+      final before = await executor.executeSettings('u');
+      await storage.saveAiProviderMode('personalOpenAi');
+      final result = await executor.executeSettings('u');
+      expect(result, before);
+      expect(gateway.settingsWrites, 0);
+      expect(storage.loadSettingsRevision(), 0);
+      expect(storage.loadAiProviderMode(), 'personalOpenAi');
+    },
+  );
+
   test('cloud preference downloads when local domain is untouched', () async {
     gateway.settings = CloudValue(
       const SyncedSettings(

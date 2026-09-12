@@ -5,11 +5,12 @@ const keysAre = (value: Record<string, unknown>, allowed: string[]) =>
   Object.keys(value).every((key) => allowed.includes(key));
 
 export function validateBody(body: unknown, config: AppConfig): {
-  message: string; conversationId?: string; context: AiContext;
+  message: string; conversationId?: string; context: AiContext; providerMode?: "personalOpenAi";
 } {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new AppError(400, "invalid_request");
   const value = body as Record<string, unknown>;
-  if (!keysAre(value, ["message", "conversationId", "context"])) throw new AppError(400, "invalid_request");
+  if (!keysAre(value, ["message", "conversationId", "context", "providerMode"]) ||
+      (value.providerMode !== undefined && value.providerMode !== "personalOpenAi")) throw new AppError(400, "invalid_request");
   if (typeof value.message !== "string" || !value.message.trim() ||
       value.message.length > config.maxMessageChars) throw new AppError(400, "invalid_request");
   if (value.conversationId !== undefined &&
@@ -28,6 +29,7 @@ export function validateBody(body: unknown, config: AppConfig): {
   if (context.activeProject !== undefined) validateProject(context.activeProject);
   return {
     message: value.message,
+    ...(value.providerMode === undefined ? {} : { providerMode: "personalOpenAi" as const }),
     ...(value.conversationId === undefined ? {} : { conversationId: value.conversationId as string }),
     context: context as unknown as AiContext,
   };

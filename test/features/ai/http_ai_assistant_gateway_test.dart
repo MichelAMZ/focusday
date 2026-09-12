@@ -11,6 +11,122 @@ void main() {
   const context = AiAssistantContext(language: 'fr', focusRemainingSeconds: 90);
   const request = AiRequest(message: 'Aide-moi', context: context);
 
+  test(
+    'personal key travels only in its header over HTTPS with redirects disabled',
+    () async {
+      final client = MockClient((incoming) async {
+        expect(
+          incoming.url.toString(),
+          'https://gateway.example.test/api/ai/respond',
+        );
+        expect(incoming.followRedirects, isFalse);
+        expect(incoming.headers['authorization'], 'Bearer firebase-token');
+        expect(incoming.headers['x-focusday-openai-key'], 'offline-key');
+        expect(incoming.body, isNot(contains('offline-key')));
+        expect(incoming.url.toString(), isNot(contains('offline-key')));
+        expect(jsonDecode(incoming.body)['providerMode'], 'personalOpenAi');
+        return http.Response('{"text":"OK"}', 200);
+      });
+      final personal = HttpAiAssistantGateway(
+        baseUri: Uri.parse('https://gateway.example.test'),
+        tokenProvider: _FakeTokenProvider('firebase-token'),
+        client: client,
+        personalKey: () => 'offline-key',
+      );
+      await personal.respond(request);
+    },
+  );
+  test(
+    'rejects remote plaintext and missing personal key before network',
+    () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response('{}', 200);
+      });
+      for (final uri in [
+        'http://remote.example',
+        'https://gateway.example.test',
+      ]) {
+        final personal = HttpAiAssistantGateway(
+          baseUri: Uri.parse(uri),
+          tokenProvider: _FakeTokenProvider('token'),
+          client: client,
+          personalKey: () => uri.startsWith('https') ? null : 'offline-key',
+        );
+        await expectLater(
+          personal.respond(request),
+          _throws(
+            uri.startsWith('https')
+                ? AiAssistantErrorCategory.unavailable
+                : AiAssistantErrorCategory.backendConfiguration,
+          ),
+        );
+      }
+      expect(calls, 0);
+    },
+  );
+  test('allows explicit localhost HTTP for development', () async {
+    var calls = 0;
+    final personal = HttpAiAssistantGateway(
+      baseUri: Uri.parse('http://localhost:8080'),
+      tokenProvider: _FakeTokenProvider('token'),
+      personalKey: () => 'offline-key',
+      client: MockClient((_) async {
+        calls++;
+        return http.Response('{"text":"OK"}', 200);
+      }),
+    );
+    await personal.respond(request);
+    expect(calls, 1);
+  });
+  test(
+    'does not send a key after identity changes while waiting for Firebase',
+    () async {
+      final token = Completer<String?>();
+      String? key = 'offline-key';
+      var calls = 0;
+      final personal = HttpAiAssistantGateway(
+        baseUri: Uri.parse('https://gateway.example.test'),
+        tokenProvider: _DelayedToken(token.future),
+        personalKey: () => key,
+        client: MockClient((_) async {
+          calls++;
+          return http.Response('{}', 200);
+        }),
+      );
+      final pending = personal.respond(request);
+      key = null;
+      token.complete('old-firebase-token');
+      await expectLater(
+        pending,
+        _throws(AiAssistantErrorCategory.unauthenticated),
+      );
+      expect(calls, 0);
+    },
+  );
+  for (final status in [429, 403]) {
+    test(
+      'personal provider status $status has a user-facing category',
+      () async {
+        final personal = HttpAiAssistantGateway(
+          baseUri: Uri.parse('https://gateway.example.test'),
+          tokenProvider: _FakeTokenProvider('token'),
+          personalKey: () => 'offline-key',
+          client: MockClient((_) async => http.Response('{}', status)),
+        );
+        await expectLater(
+          personal.respond(request),
+          _throws(
+            status == 429
+                ? AiAssistantErrorCategory.personalQuota
+                : AiAssistantErrorCategory.personalAccess,
+          ),
+        );
+      },
+    );
+  }
+
   HttpAiAssistantGateway gateway(
     MockClient client, {
     String? token = 'firebase-token',
@@ -155,4 +271,11 @@ class _FakeTokenProvider implements FirebaseIdTokenProvider {
 
   @override
   Future<String?> getIdToken() async => token;
+}
+
+class _DelayedToken implements FirebaseIdTokenProvider {
+  _DelayedToken(this.token);
+  final Future<String?> token;
+  @override
+  Future<String?> getIdToken() => token;
 }

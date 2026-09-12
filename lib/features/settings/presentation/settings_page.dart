@@ -5,6 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/account_page.dart';
 import '../application/settings_controller.dart';
 import '../application/startup_controller.dart';
+import '../../ai/presentation/ai_provider_settings_section.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -20,6 +21,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          const AiProviderSettingsSection(),
           Text(
             l10n.languageSectionTitle,
             style: Theme.of(context).textTheme.titleMedium,

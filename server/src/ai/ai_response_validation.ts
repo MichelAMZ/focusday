@@ -23,7 +23,8 @@ const invalidProviderOutput = (): never => {
 };
 
 export function validateProviderResponse(raw: AiProviderResponse): AiResponse {
-  if (!isRecord(raw) || !requiredText(raw.text, 20000)) invalidProviderOutput();
+  if (!isRecord(raw) || !hasOnlyKeys(raw, ["text", "conversationId", "proposedActions"]) ||
+      !requiredText(raw.text, 20000)) invalidProviderOutput();
   if (raw.conversationId !== undefined &&
       !requiredText(raw.conversationId, 500)) invalidProviderOutput();
 
@@ -43,7 +44,22 @@ export function validateProposedActions(raw: unknown): AiProposedAction[] {
   if (!Array.isArray(raw) || raw.length > AI_ACTION_LIMITS.maxActions) {
     return invalidProviderOutput();
   }
-  return raw.map(validateAction);
+  const actions = raw.map(validateAction);
+  const targets = new Set<string>();
+  let timerActions = 0;
+  for (const action of actions) {
+    // Renaming and changing completion are compatible; repeated writes to the
+    // same field (including complete + reopen) are ambiguous and rejected.
+    const target = action.type === "addTask"
+      ? `add:${action.title.trim().toLocaleLowerCase()}`
+      : action.type === "renameTask" ? `name:${action.taskId}`
+      : action.type === "completeTask" || action.type === "reopenTask"
+        ? `completed:${action.taskId}` : action.type;
+    if (["startTimer", "pauseTimer", "setFocusDuration"].includes(action.type) && ++timerActions > 1) invalidProviderOutput();
+    if (targets.has(target)) invalidProviderOutput();
+    targets.add(target);
+  }
+  return actions;
 }
 
 function validateAction(raw: unknown): AiProposedAction {
@@ -76,6 +92,10 @@ function validateAction(raw: unknown): AiProposedAction {
           raw.newNotes.length > AI_ACTION_LIMITS.maxProjectNotesLength) {
         return invalidProviderOutput();
       }
+      return raw as AiProposedAction;
+    case "startTimer":
+    case "pauseTimer":
+      if (!hasOnlyKeys(raw, ["type"])) return invalidProviderOutput();
       return raw as AiProposedAction;
     case "setFocusDuration":
       if (!hasOnlyKeys(raw, ["type", "durationMinutes"]) ||

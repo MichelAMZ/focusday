@@ -27,6 +27,8 @@ export type AiProposedAction =
   | { type: "completeTask"; taskId: string }
   | { type: "reopenTask"; taskId: string }
   | { type: "updateProjectNotes"; newNotes: string }
+  | { type: "startTimer" }
+  | { type: "pauseTimer" }
   | { type: "setFocusDuration"; durationMinutes: number };
 
 // Provider output is deliberately untrusted until AiService validates it.

@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FocusDay Web - local backend",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=5000",
+        "--dart-define=FOCUSDAY_AI_BACKEND_URL=http://localhost:8080"
+      ]
+    },
+    {
+      "name": "FocusDay Windows - local backend",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "windows",
+      "toolArgs": [
+        "--dart-define=FOCUSDAY_AI_BACKEND_URL=http://localhost:8080"
+      ]
+    }
+  ]
+}

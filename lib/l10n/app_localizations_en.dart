@@ -27,15 +27,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completionSoundTitle => 'Focus completion sound';
 
   @override
-  String get completionSoundSubtitle =>
-      'Plays a sound when the timer reaches 00:00.';
+  String get completionSoundSubtitle => 'Plays a sound when the timer reaches 00:00.';
 
   @override
   String get scheduledAlertsTitle => 'Scheduled project alerts';
 
   @override
-  String get scheduledAlertsSubtitle =>
-      'Shows an alert when a project reaches its scheduled start time.';
+  String get scheduledAlertsSubtitle => 'Shows an alert when a project reaches its scheduled start time.';
 
   @override
   String get miniBarLabel => 'Mini-bar';
@@ -93,8 +91,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProjectTitle => 'Edit project';
 
   @override
-  String get activeProjectDeleteError =>
-      'The active project cannot be deleted.';
+  String get activeProjectDeleteError => 'The active project cannot be deleted.';
 
   @override
   String get deleteProjectTitle => 'Delete project?';
@@ -257,8 +254,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get windowsStartupTitle => 'Start FocusDay with Windows';
 
   @override
-  String get windowsStartupSubtitle =>
-      'Automatically launch FocusDay when you sign in to Windows.';
+  String get windowsStartupSubtitle => 'Automatically launch FocusDay when you sign in to Windows.';
 
   @override
   String get miniBarNoProject => 'No project';
@@ -276,19 +272,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncComplete => 'Synchronized.';
 
   @override
-  String get syncConflict =>
-      'Local/cloud conflict: choose a version in Account & Cloud.';
+  String get syncConflict => 'Local/cloud conflict: choose a version in Account & Cloud.';
 
   @override
-  String get syncFirstRequired =>
-      'First synchronization: choose backup or restore.';
+  String get syncFirstRequired => 'First synchronization: choose backup or restore.';
 
   @override
   String get syncPending => 'A recent local change is waiting to synchronize.';
 
   @override
-  String get syncPendingOffline =>
-      'Waiting to synchronize. You may be offline.';
+  String get syncPendingOffline => 'Waiting to synchronize. You may be offline.';
 
   @override
   String get syncError => 'Synchronization is temporarily unavailable.';
@@ -308,8 +301,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncResolveMessage =>
-      'Choose which version should become the synchronized version.';
+  String get syncResolveMessage => 'Choose which version should become the synchronized version.';
 
   @override
   String get syncKeepLocal => 'Keep my local data';
@@ -321,8 +313,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNoConflict => 'No synchronization conflict was found.';
 
   @override
-  String get syncResolutionFailed =>
-      'Conflict resolution failed. No baseline was changed.';
+  String get syncResolutionFailed => 'Conflict resolution failed. No baseline was changed.';
 
   @override
   String get syncDomainProjects => 'projects';
@@ -349,16 +340,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleSignInFailed => 'Unable to sign in with Google.';
 
   @override
-  String get googleAccountCollision =>
-      'An account already exists with another sign-in method.';
+  String get googleAccountCollision => 'An account already exists with another sign-in method.';
 
   @override
-  String get googleNetworkError =>
-      'Network unavailable. Check your connection and try again.';
+  String get googleNetworkError => 'Network unavailable. Check your connection and try again.';
 
   @override
-  String get googlePopupBlocked =>
-      'The Google sign-in window was blocked by the browser.';
+  String get googlePopupBlocked => 'The Google sign-in window was blocked by the browser.';
 
   @override
   String get googleSignInUnavailable => 'Google sign-in is not available.';
@@ -488,4 +476,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiProposalMinutes => 'min';
+
+  @override
+  String get aiProviderTitle => 'AI assistant';
+
+  @override
+  String get aiProviderDisabled => 'Disabled';
+
+  @override
+  String get aiDisabledState => 'AI assistant disabled';
+
+  @override
+  String get aiProviderChatgpt => 'ChatGPT';
+
+  @override
+  String get aiProviderPersonal => 'My OpenAI API key';
+
+  @override
+  String get aiKeyLabel => 'Personal OpenAI API key';
+
+  @override
+  String get aiKeyConfigure => 'Configure';
+
+  @override
+  String get aiKeyDelete => 'Delete key';
+
+  @override
+  String get aiKeyConfigured => 'Configured';
+
+  @override
+  String get aiKeyMissing => 'Not configured';
+
+  @override
+  String get aiKeySessionOnly => 'The key stays only in memory for this session and account. It is cleared when switching mode or account and on closing. API usage is billed to you separately from ChatGPT.';
+
+  @override
+  String get aiKeyConfigureFailed => 'Sign in to your FocusDay account and check the entered key.';
+
+  @override
+  String get aiOpenSettings => 'Open settings';
+
+  @override
+  String get aiCopyChatgpt => 'Copy for ChatGPT';
+
+  @override
+  String get aiCopiedChatgpt => 'Context copied';
+
+  @override
+  String get aiChatgptHelp => 'Review the context before copying it into ChatGPT. No API call or automatic action.';
+
+  @override
+  String get aiPersonalQuota => 'API quota, billing or rate limit: check your OpenAI account.';
+
+  @override
+  String get aiPersonalAccess => 'OpenAI key rejected or model access unavailable. Check your configuration.';
+
+  @override
+  String get aiBackendConfiguration => 'The AI backend address is missing or invalid. Restart FocusDay with a valid backend configuration.';
+
+  @override
+  String get aiProposalStartTimer => 'Start timer';
+
+  @override
+  String get aiProposalPauseTimer => 'Pause timer';
+
+  @override
+  String get aiProposalFailed => 'Execution failed. Check your data before requesting another proposal.';
+
+  @override
+  String get aiHistoryLocal => 'Local history: last 100 messages. Previous actions are not restored.';
+
+  @override
+  String get aiHistoryClear => 'Clear history';
+
+  @override
+  String get aiHistoryClearConfirm => 'Clear messages on this device and cancel pending proposals?';
+
+  @override
+  String get aiHistoryError => 'Local history could not be read or saved. Check storage on this device.';
 }

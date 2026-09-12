@@ -1,3 +1,5 @@
+import '../application/ai_diagnostics.dart';
+
 enum AiAssistantErrorCategory {
   unauthenticated,
   unavailable,
@@ -5,13 +7,17 @@ enum AiAssistantErrorCategory {
   rateLimited,
   invalidRequest,
   serverError,
+  personalQuota,
+  personalAccess,
+  backendConfiguration,
 }
 
 class AiAssistantException implements Exception {
-  const AiAssistantException(this.category, {this.statusCode});
+  const AiAssistantException(this.category, {this.statusCode, this.reason});
 
   final AiAssistantErrorCategory category;
   final int? statusCode;
+  final AiDiagnosticReason? reason;
 }
 
 class AiAssistantTaskContext {
@@ -34,11 +40,13 @@ class AiAssistantProjectContext {
     required this.name,
     required this.tasks,
     this.notes,
+    this.localProjectId,
   });
 
   final String name;
   final List<AiAssistantTaskContext> tasks;
   final String? notes;
+  final String? localProjectId; // Never serialized upstream.
 
   Map<String, Object?> toJson() => {
     'name': name,
@@ -158,6 +166,8 @@ enum AiProposedActionType {
   reopenTask,
   updateProjectNotes,
   setFocusDuration,
+  startTimer,
+  pauseTimer,
 }
 
 class AiProposedAction {
@@ -169,6 +179,7 @@ class AiProposedAction {
     this.newTitle,
     this.newNotes,
     this.durationMinutes,
+    this.projectId,
   });
 
   final AiProposedActionType type;
@@ -178,9 +189,28 @@ class AiProposedAction {
   final String? newTitle;
   final String? newNotes;
   final int? durationMinutes;
+  final String? projectId;
+
+  AiProposedAction withTarget(String project, String? task) => AiProposedAction(
+    type: type,
+    projectId: projectId ?? project,
+    taskId: task,
+    title: title,
+    description: description,
+    newTitle: newTitle,
+    newNotes: newNotes,
+    durationMinutes: durationMinutes,
+  );
 
   factory AiProposedAction.fromJson(Map<String, Object?> json) {
-    final typeName = json['type'];
+    final typeName = switch (json['type']) {
+      'CREATE_TASK' => 'addTask',
+      'COMPLETE_TASK' => 'completeTask',
+      'START_TIMER' => 'startTimer',
+      'PAUSE_TIMER' => 'pauseTimer',
+      'UPDATE_PROJECT_DURATION' => 'setFocusDuration',
+      final value => value,
+    };
     final type = AiProposedActionType.values
         .where((value) => value.name == typeName)
         .firstOrNull;
@@ -194,7 +224,10 @@ class AiProposedAction {
       AiProposedActionType.reopenTask => {'type', 'taskId'},
       AiProposedActionType.updateProjectNotes => {'type', 'newNotes'},
       AiProposedActionType.setFocusDuration => {'type', 'durationMinutes'},
+      AiProposedActionType.startTimer ||
+      AiProposedActionType.pauseTimer => {'type'},
     };
+    allowed.add('projectId');
     if (json.keys.any((key) => !allowed.contains(key))) {
       throw const AiAssistantException(AiAssistantErrorCategory.serverError);
     }
@@ -222,6 +255,7 @@ class AiProposedAction {
       newTitle: stringField('newTitle'),
       newNotes: stringField('newNotes'),
       durationMinutes: intField('durationMinutes'),
+      projectId: stringField('projectId'),
     );
   }
 
@@ -233,5 +267,6 @@ class AiProposedAction {
     if (newTitle != null) 'newTitle': newTitle,
     if (newNotes != null) 'newNotes': newNotes,
     if (durationMinutes != null) 'durationMinutes': durationMinutes,
+    if (projectId != null) 'projectId': projectId,
   };
 }

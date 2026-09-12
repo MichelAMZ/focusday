@@ -138,6 +138,9 @@ void main() {
       AiAssistantErrorCategory.rateLimited,
       AiAssistantErrorCategory.invalidRequest,
       AiAssistantErrorCategory.serverError,
+      AiAssistantErrorCategory.personalQuota,
+      AiAssistantErrorCategory.personalAccess,
+      AiAssistantErrorCategory.backendConfiguration,
     });
   });
 

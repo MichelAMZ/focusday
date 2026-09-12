@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focusday/features/ai/application/ai_assistant_controller.dart';
+import 'package:focusday/features/ai/application/ai_provider_settings.dart';
 import 'package:focusday/features/ai/application/ai_assistant_gateway.dart';
 import 'package:focusday/features/ai/domain/ai_assistant_models.dart';
 import 'package:focusday/features/ai/infrastructure/fake_ai_assistant_gateway.dart';
@@ -38,7 +39,12 @@ void main() {
     double width = 360,
   }) {
     return ProviderScope(
-      overrides: [aiAssistantGatewayProvider.overrideWithValue(gateway)],
+      overrides: [
+        aiAssistantGatewayProvider.overrideWithValue(gateway),
+        aiProviderSettingsProvider.overrideWith(
+          _ConfiguredPersonalSettings.new,
+        ),
+      ],
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -156,6 +162,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Réponse fake'), findsOneWidget);
     expect(gateway.calls, 2);
+    expect(find.byKey(const Key('ai-user-bubble')), findsOneWidget);
   });
 
   testWidgets('passes active allowlisted context and conversation id', (
@@ -193,7 +200,12 @@ void main() {
   test('controller does not mutate project task timer or notes', () async {
     final gateway = _FakeGateway();
     final container = ProviderContainer(
-      overrides: [aiAssistantGatewayProvider.overrideWithValue(gateway)],
+      overrides: [
+        aiAssistantGatewayProvider.overrideWithValue(gateway),
+        aiProviderSettingsProvider.overrideWith(
+          _ConfiguredPersonalSettings.new,
+        ),
+      ],
     );
     addTearDown(container.dispose);
     final projectsBefore = project.toJson();
@@ -659,5 +671,13 @@ extension on AiResponse {
     conversationId: conversationId,
     metadata: metadata,
     proposedActions: actions,
+  );
+}
+
+class _ConfiguredPersonalSettings extends AiProviderSettingsController {
+  @override
+  AiProviderSettings build() => const AiProviderSettings(
+    mode: AiProviderMode.personalOpenAi,
+    keyConfigured: true,
   );
 }

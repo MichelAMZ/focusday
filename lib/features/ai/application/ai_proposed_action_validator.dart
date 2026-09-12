@@ -27,6 +27,9 @@ class AiProposedActionValidator {
     FocusProject project,
     FocusTimerState timer,
   ) {
+    if (action.projectId != null && action.projectId != project.id) {
+      return false;
+    }
     final task = action.taskId == null
         ? null
         : project.tasks.where((item) => item.id == action.taskId).firstOrNull;
@@ -41,6 +44,14 @@ class AiProposedActionValidator {
       AiProposedActionType.updateProjectNotes =>
         action.newNotes != null &&
             action.newNotes!.length <= maxProjectNotesLength,
+      AiProposedActionType.startTimer =>
+        timer.projectId == project.id &&
+            (timer.status == FocusTimerStatus.idle ||
+                timer.status == FocusTimerStatus.paused) &&
+            timer.remainingSeconds > 0,
+      AiProposedActionType.pauseTimer =>
+        timer.projectId == project.id &&
+            timer.status == FocusTimerStatus.running,
       AiProposedActionType.setFocusDuration =>
         action.durationMinutes != null &&
             action.durationMinutes! >= minFocusDurationMinutes &&
@@ -50,40 +61,27 @@ class AiProposedActionValidator {
   }
 
   bool _hasContradictions(List<AiProposedAction> actions) {
-    final taskTransitions = <String, AiProposedActionType>{};
-    final taskRenames = <String, String>{};
-    int? focusDuration;
-    String? projectNotes;
-
+    final targets = <String>{};
+    var timerActions = 0;
     for (final action in actions) {
-      switch (action.type) {
-        case AiProposedActionType.completeTask:
-        case AiProposedActionType.reopenTask:
-          final taskId = action.taskId;
-          if (taskId != null &&
-              taskTransitions.putIfAbsent(taskId, () => action.type) !=
-                  action.type) {
-            return true;
-          }
-        case AiProposedActionType.renameTask:
-          final taskId = action.taskId;
-          final title = action.newTitle?.trim();
-          if (taskId != null && title != null) {
-            final previous = taskRenames.putIfAbsent(taskId, () => title);
-            if (previous != title) return true;
-          }
-        case AiProposedActionType.setFocusDuration:
-          final duration = action.durationMinutes;
-          if (focusDuration != null && duration != focusDuration) return true;
-          focusDuration = duration;
-        case AiProposedActionType.updateProjectNotes:
-          final notes = action.newNotes;
-          if (projectNotes != null && notes != projectNotes) return true;
-          projectNotes = notes;
-        case AiProposedActionType.addTask:
-          break;
+      final target = switch (action.type) {
+        AiProposedActionType.addTask =>
+          'add:${action.title?.trim().toLowerCase()}',
+        AiProposedActionType.completeTask ||
+        AiProposedActionType.reopenTask => 'task:${action.taskId}',
+        AiProposedActionType.renameTask => 'rename:${action.taskId}',
+        _ => action.type.name,
+      };
+      if (!targets.add(target)) return true;
+      if ([
+        AiProposedActionType.startTimer,
+        AiProposedActionType.pauseTimer,
+        AiProposedActionType.setFocusDuration,
+      ].contains(action.type)) {
+        timerActions++;
       }
     }
+    if (timerActions > 1) return true;
     return false;
   }
 

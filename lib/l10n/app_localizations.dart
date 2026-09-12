@@ -62,8 +62,7 @@ import 'app_localizations_fr.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -71,8 +70,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -84,18 +82,17 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('fr'),
+    Locale('fr')
   ];
 
   /// No description provided for @appTitle.
@@ -1003,10 +1000,165 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'min'**
   String get aiProposalMinutes;
+
+  /// No description provided for @aiProviderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant'**
+  String get aiProviderTitle;
+
+  /// No description provided for @aiProviderDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get aiProviderDisabled;
+
+  /// No description provided for @aiDisabledState.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant disabled'**
+  String get aiDisabledState;
+
+  /// No description provided for @aiProviderChatgpt.
+  ///
+  /// In en, this message translates to:
+  /// **'ChatGPT'**
+  String get aiProviderChatgpt;
+
+  /// No description provided for @aiProviderPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'My OpenAI API key'**
+  String get aiProviderPersonal;
+
+  /// No description provided for @aiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal OpenAI API key'**
+  String get aiKeyLabel;
+
+  /// No description provided for @aiKeyConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure'**
+  String get aiKeyConfigure;
+
+  /// No description provided for @aiKeyDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete key'**
+  String get aiKeyDelete;
+
+  /// No description provided for @aiKeyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get aiKeyConfigured;
+
+  /// No description provided for @aiKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get aiKeyMissing;
+
+  /// No description provided for @aiKeySessionOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The key stays only in memory for this session and account. It is cleared when switching mode or account and on closing. API usage is billed to you separately from ChatGPT.'**
+  String get aiKeySessionOnly;
+
+  /// No description provided for @aiKeyConfigureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to your FocusDay account and check the entered key.'**
+  String get aiKeyConfigureFailed;
+
+  /// No description provided for @aiOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get aiOpenSettings;
+
+  /// No description provided for @aiCopyChatgpt.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy for ChatGPT'**
+  String get aiCopyChatgpt;
+
+  /// No description provided for @aiCopiedChatgpt.
+  ///
+  /// In en, this message translates to:
+  /// **'Context copied'**
+  String get aiCopiedChatgpt;
+
+  /// No description provided for @aiChatgptHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the context before copying it into ChatGPT. No API call or automatic action.'**
+  String get aiChatgptHelp;
+
+  /// No description provided for @aiPersonalQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'API quota, billing or rate limit: check your OpenAI account.'**
+  String get aiPersonalQuota;
+
+  /// No description provided for @aiPersonalAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI key rejected or model access unavailable. Check your configuration.'**
+  String get aiPersonalAccess;
+
+  /// No description provided for @aiBackendConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI backend address is missing or invalid. Restart FocusDay with a valid backend configuration.'**
+  String get aiBackendConfiguration;
+
+  /// No description provided for @aiProposalStartTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Start timer'**
+  String get aiProposalStartTimer;
+
+  /// No description provided for @aiProposalPauseTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause timer'**
+  String get aiProposalPauseTimer;
+
+  /// No description provided for @aiProposalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution failed. Check your data before requesting another proposal.'**
+  String get aiProposalFailed;
+
+  /// No description provided for @aiHistoryLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local history: last 100 messages. Previous actions are not restored.'**
+  String get aiHistoryLocal;
+
+  /// No description provided for @aiHistoryClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get aiHistoryClear;
+
+  /// No description provided for @aiHistoryClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear messages on this device and cancel pending proposals?'**
+  String get aiHistoryClearConfirm;
+
+  /// No description provided for @aiHistoryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Local history could not be read or saved. Check storage on this device.'**
+  String get aiHistoryError;
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -1015,26 +1167,25 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'fr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'fr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en':
-      return AppLocalizationsEn();
-    case 'fr':
-      return AppLocalizationsFr();
+    case 'en': return AppLocalizationsEn();
+    case 'fr': return AppLocalizationsFr();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
+    'that was used.'
   );
 }

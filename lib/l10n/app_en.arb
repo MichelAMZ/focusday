@@ -125,7 +125,13 @@
   "syncRetry": "Retry",
   "syncResolveAction": "Resolve synchronization conflicts",
   "syncResolveTitle": "Resolve {domain} conflict",
-  "@syncResolveTitle": {"placeholders": {"domain": {"type": "String"}}},
+  "@syncResolveTitle": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "syncResolveMessage": "Choose which version should become the synchronized version.",
   "syncKeepLocal": "Keep my local data",
   "syncUseCloud": "Use cloud data",
@@ -149,7 +155,13 @@
   "aiAssistantEmptyTitle": "What would you like to do now?",
   "aiAssistantContext": "Context: active project",
   "aiAssistantContextProject": "Context: {projectName}",
-  "@aiAssistantContextProject": {"placeholders": {"projectName": {"type": "String"}}},
+  "@aiAssistantContextProject": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
   "aiAssistantContextNone": "Context: no active project",
   "aiSuggestionNext": "What is my next action?",
   "aiSuggestionBreakDown": "Help me break down the current task",
@@ -167,10 +179,22 @@
   "aiErrorServer": "Something went wrong. Try again.",
   "aiProposalTitle": "Proposal",
   "aiProposalProject": "Project: {projectName}",
-  "@aiProposalProject": {"placeholders": {"projectName": {"type": "String"}}},
+  "@aiProposalProject": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
   "aiProposalAddTask": "Add a task",
   "aiProposalAddTasks": "Add {count} tasks",
-  "@aiProposalAddTasks": {"placeholders": {"count": {"type": "int"}}},
+  "@aiProposalAddTasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "aiProposalRenameTask": "Rename a task",
   "aiProposalCompleteTask": "Mark as completed",
   "aiProposalReopenTask": "Reopen task",
@@ -185,5 +209,31 @@
   "aiProposalRejected": "Proposal rejected",
   "aiProposalExpired": "This proposal is no longer applicable.",
   "aiProposalInvalid": "Invalid action",
-  "aiProposalMinutes": "min"
+  "aiProposalMinutes": "min",
+  "aiProviderTitle": "AI assistant",
+  "aiProviderDisabled": "Disabled",
+  "aiDisabledState": "AI assistant disabled",
+  "aiProviderChatgpt": "ChatGPT",
+  "aiProviderPersonal": "My OpenAI API key",
+  "aiKeyLabel": "Personal OpenAI API key",
+  "aiKeyConfigure": "Configure",
+  "aiKeyDelete": "Delete key",
+  "aiKeyConfigured": "Configured",
+  "aiKeyMissing": "Not configured",
+  "aiKeySessionOnly": "The key stays only in memory for this session and account. It is cleared when switching mode or account and on closing. API usage is billed to you separately from ChatGPT.",
+  "aiKeyConfigureFailed": "Sign in to your FocusDay account and check the entered key.",
+  "aiOpenSettings": "Open settings",
+  "aiCopyChatgpt": "Copy for ChatGPT",
+  "aiCopiedChatgpt": "Context copied",
+  "aiChatgptHelp": "Review the context before copying it into ChatGPT. No API call or automatic action.",
+  "aiPersonalQuota": "API quota, billing or rate limit: check your OpenAI account.",
+  "aiPersonalAccess": "OpenAI key rejected or model access unavailable. Check your configuration.",
+  "aiBackendConfiguration": "The AI backend address is missing or invalid. Restart FocusDay with a valid backend configuration.",
+  "aiProposalStartTimer": "Start timer",
+  "aiProposalPauseTimer": "Pause timer",
+  "aiProposalFailed": "Execution failed. Check your data before requesting another proposal.",
+  "aiHistoryLocal": "Local history: last 100 messages. Previous actions are not restored.",
+  "aiHistoryClear": "Clear history",
+  "aiHistoryClearConfirm": "Clear messages on this device and cancel pending proposals?",
+  "aiHistoryError": "Local history could not be read or saved. Check storage on this device."
 }

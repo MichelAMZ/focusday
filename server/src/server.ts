@@ -8,16 +8,16 @@ import { MemoryRateLimiter } from "./middleware/rate_limit.js";
 
 const config = loadConfig();
 initializeApp();
-const provider = new OpenAiResponsesProvider({
-  apiKey: config.openAiApiKey,
-  model: config.openAiModel,
-  timeoutMs: config.openAiTimeoutMs,
-  store: config.openAiStore,
-});
 const app = createApp({
   config,
   auth: new FirebaseAdminAuthVerifier(),
-  ai: new AiService(provider, config.safetySecret),
+  ai: new AiService(new OpenAiResponsesProvider({
+    apiKey: config.openAiApiKey,
+    model: config.openAiModel,
+    timeoutMs: config.openAiTimeoutMs,
+    store: config.openAiStore,
+  }), config.safetySecret),
+  // FocusDay V2: personal OpenAI API key configuration
   rateLimiter: new MemoryRateLimiter(
     config.rateLimitRequests,
     config.rateLimitWindowMs,

@@ -8,6 +8,9 @@ import '../../today/application/focus_timer_state.dart';
 import '../application/ai_assistant_context_builder.dart';
 import '../application/ai_assistant_controller.dart';
 import '../domain/ai_assistant_models.dart';
+import '../application/ai_provider_settings.dart';
+import '../application/chatgpt_export.dart';
+import '../../settings/presentation/settings_page.dart';
 
 class AiAssistantPage extends StatelessWidget {
   const AiAssistantPage({
@@ -94,9 +97,88 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     });
   }
 
+  Future<void> _clearHistory() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.aiHistoryClear),
+        content: Text(l10n.aiHistoryClearConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancelButton),
+          ),
+          FilledButton(
+            key: const Key('ai-history-clear-confirm'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.aiHistoryClear),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      _textController.clear();
+      await ref.read(aiAssistantControllerProvider.notifier).clearHistory();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final settings = ref.watch(aiProviderSettingsProvider);
+    if (settings.mode != AiProviderMode.focusday &&
+        (settings.mode != AiProviderMode.personalOpenAi ||
+            !settings.keyConfigured)) {
+      final export = settings.mode == AiProviderMode.chatgpt
+          ? buildChatGptExport(_context())
+          : null;
+      return Card(
+        margin: EdgeInsets.all(widget.isDedicatedPage ? 16 : 8),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.aiProviderTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              if (export != null) ...[
+                Text(l10n.aiChatgptHelp),
+                const SizedBox(height: 12),
+                SelectableText(export, key: const Key('ai-chatgpt-context')),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  key: const Key('ai-copy-chatgpt'),
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: export));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.aiCopiedChatgpt)),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: Text(l10n.aiCopyChatgpt),
+                ),
+              ] else
+                Text(
+                  settings.mode == AiProviderMode.disabled
+                      ? l10n.aiDisabledState
+                      : l10n.aiKeyMissing,
+                ),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+                ),
+                child: Text(l10n.aiOpenSettings),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final state = ref.watch(aiAssistantControllerProvider);
     final suggestions = [
       l10n.aiSuggestionNext,
@@ -113,6 +195,37 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.aiHistoryLocal,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('ai-history-clear'),
+                  tooltip: l10n.aiHistoryClear,
+                  onPressed:
+                      state.isClearingHistory ||
+                          (state.messages.isEmpty && !state.historyError)
+                      ? null
+                      : _clearHistory,
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
+            ),
+          ),
+          if (state.historyError)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                l10n.aiHistoryError,
+                key: const Key('ai-history-error'),
+              ),
+            ),
           if (widget.isDedicatedPage)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
@@ -203,7 +316,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                           project: widget.projects
                               .where(
                                 (project) =>
-                                    project.status == FocusProjectStatus.active,
+                                    project.id == state.proposalProjectId,
                               )
                               .firstOrNull,
                           timer: widget.timer,
@@ -248,7 +361,34 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                                   horizontal: 16,
                                   vertical: 12,
                                 ),
-                                child: SelectableText(message.text),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SelectableText(message.text),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      [
+                                        if (message.projectName != null)
+                                          message.projectName!,
+                                        MaterialLocalizations.of(
+                                          context,
+                                        ).formatShortDate(
+                                          message.createdAt.toLocal(),
+                                        ),
+                                        MaterialLocalizations.of(
+                                          context,
+                                        ).formatTimeOfDay(
+                                          TimeOfDay.fromDateTime(
+                                            message.createdAt.toLocal(),
+                                          ),
+                                        ),
+                                      ].join(' · '),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -308,7 +448,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                       focusNode: _focusNode,
                       minLines: 1,
                       maxLines: 4,
-                      enabled: !state.isSending,
+                      enabled: !state.isSending && !state.isClearingHistory,
                       decoration: InputDecoration(
                         hintText: l10n.aiInputHint,
                         border: const OutlineInputBorder(),
@@ -320,7 +460,9 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                 IconButton.filled(
                   key: const Key('ai-send-button'),
                   tooltip: l10n.aiSend,
-                  onPressed: state.isSending ? null : _send,
+                  onPressed: state.isSending || state.isClearingHistory
+                      ? null
+                      : _send,
                   icon: const Icon(Icons.send_outlined),
                 ),
               ],
@@ -348,6 +490,10 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     AiAssistantErrorCategory.rateLimited => l10n.aiErrorRateLimited,
     AiAssistantErrorCategory.invalidRequest => l10n.aiErrorInvalidRequest,
     AiAssistantErrorCategory.serverError => l10n.aiErrorServer,
+    AiAssistantErrorCategory.personalQuota => l10n.aiPersonalQuota,
+    AiAssistantErrorCategory.personalAccess => l10n.aiPersonalAccess,
+    AiAssistantErrorCategory.backendConfiguration =>
+      l10n.aiBackendConfiguration,
   };
 }
 
@@ -376,9 +522,7 @@ class _AiProposalCard extends StatelessWidget {
     final addCount = actions
         .where((action) => action.type == AiProposedActionType.addTask)
         .length;
-    final confirmLabel = addCount == actions.length
-        ? l10n.aiProposalAdd
-        : l10n.aiProposalConfirm;
+    final confirmLabel = l10n.aiProposalConfirm;
 
     return Semantics(
       container: true,
@@ -437,6 +581,8 @@ class _AiProposalCard extends StatelessWidget {
                   Icons.check_circle_outline,
                   l10n.aiProposalApplied,
                 ),
+              if (status == AiProposalStatus.failed)
+                _status(context, Icons.error_outline, l10n.aiProposalFailed),
               if (status == AiProposalStatus.rejected)
                 _status(context, Icons.block_outlined, l10n.aiProposalRejected),
               if (status == AiProposalStatus.expired || !applicable)
@@ -502,6 +648,16 @@ class _AiProposalCard extends StatelessWidget {
         detail:
             '${l10n.aiProposalBefore}: ${_preview(project?.notes ?? '')}\n'
             '${l10n.aiProposalAfter}: ${_preview(action.newNotes ?? '')}',
+      ),
+      AiProposedActionType.startTimer => _line(
+        context,
+        l10n.aiProposalStartTimer,
+        detail: project?.name ?? l10n.aiProposalInvalid,
+      ),
+      AiProposedActionType.pauseTimer => _line(
+        context,
+        l10n.aiProposalPauseTimer,
+        detail: project?.name ?? l10n.aiProposalInvalid,
       ),
       AiProposedActionType.setFocusDuration => _line(
         context,

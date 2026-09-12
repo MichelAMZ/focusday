@@ -8,6 +8,13 @@ class FocusDayStorage {
 
   final SharedPreferences preferences;
 
+  // Device-local only: deliberately outside synced SettingsState.
+  String? loadAiProviderMode() =>
+      preferences.getString('focusday.local.aiProvider');
+  Future<void> saveAiProviderMode(String value) async {
+    await preferences.setString('focusday.local.aiProvider', value);
+  }
+
   static const _projectsKey = 'focusday.projects.v1';
   static const _timerKey = 'focusday.timer.v1';
   static const _completionSoundEnabledKey =
